@@ -6,6 +6,7 @@ OFFLINE_CORE = [
     ROOT / "cisco_assistant" / "models.py",
     ROOT / "cisco_assistant" / "ipam.py",
     ROOT / "cisco_assistant" / "validation.py",
+    ROOT / "cisco_assistant" / "profiles.py",
 ]
 FORBIDDEN_IMPORT_ROOTS = {
     "paramiko",
@@ -32,7 +33,7 @@ def imported_roots(path: Path) -> set[str]:
     return roots
 
 
-def test_normalized_models_ipam_and_validation_are_offline_only():
+def test_normalized_models_ipam_validation_and_profiles_are_offline_only():
     violations = {}
     for path in OFFLINE_CORE:
         bad = imported_roots(path) & FORBIDDEN_IMPORT_ROOTS
