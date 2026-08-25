@@ -16,15 +16,19 @@ def interfaces(count: int) -> tuple[str, ...]:
     return tuple(f"GigabitEthernet{index}" for index in range(1, count + 1))
 
 
-def test_registry_contains_initial_three_versioned_templates():
+def test_registry_contains_versioned_beginner_templates():
     definitions = list_templates()
     assert tuple(definition.template_id for definition in definitions) == (
         TemplateId.SMALL_OFFICE,
+        TemplateId.OFFICE_GUEST_WIFI,
         TemplateId.OFFICE_IP_CAMERAS,
+        TemplateId.CAMERA_VMS,
+        TemplateId.AI_CAMERA_SERVER,
         TemplateId.AI_CAMERA_VMS,
     )
     assert all(definition.version == "1.0.0" for definition in definitions)
     assert all(definition.schema_version == 1 for definition in definitions)
+    assert all("management" in definition.role_keys for definition in definitions)
 
 
 def test_small_office_build_is_deterministic_and_sequential():
@@ -79,6 +83,27 @@ def test_small_office_build_is_deterministic_and_sequential():
     assert first.validation.valid
 
 
+def test_office_guest_wifi_is_standalone_and_does_not_guess_ap_trunk():
+    result = build_template(
+        TemplateRequest(
+            template_id=TemplateId.OFFICE_GUEST_WIFI,
+            site_name="WiFi Branch",
+            start_vlan_id=100,
+            start_network="10.55.0.0/24",
+            role_port_counts=(
+                RolePortCount("office", 2),
+                RolePortCount("guest", 1),
+            ),
+            access_interfaces=interfaces(3),
+            management_source_networks=("10.55.0.0/24",),
+        )
+    )
+    assert [vlan.name for vlan in result.intent.vlans] == ["MGMT", "OFFICE", "GUEST_WIFI"]
+    assert [port.role for port in result.intent.ports] == ["office", "office", "guest"]
+    assert result.intent.uplinks == ()
+    assert any("AP trunk mapping" in note for note in result.notes)
+
+
 def test_office_camera_template_builds_expected_roles():
     result = build_template(
         TemplateRequest(
@@ -109,6 +134,39 @@ def test_office_camera_template_builds_expected_roles():
         "camera",
         "camera",
     ]
+
+
+def test_camera_vms_standalone_template_builds_three_networks():
+    result = build_template(
+        TemplateRequest(
+            template_id=TemplateId.CAMERA_VMS,
+            site_name="VMS Site",
+            start_vlan_id=300,
+            start_network="10.65.0.0/24",
+            role_port_counts=(RolePortCount("camera", 3), RolePortCount("vms", 1)),
+            access_interfaces=interfaces(4),
+        )
+    )
+    assert [vlan.name for vlan in result.intent.vlans] == ["MGMT", "CAMERA", "VMS"]
+    assert [port.role for port in result.intent.ports] == ["camera", "camera", "camera", "vms"]
+
+
+def test_ai_camera_server_standalone_template_builds_three_networks():
+    result = build_template(
+        TemplateRequest(
+            template_id=TemplateId.AI_CAMERA_SERVER,
+            site_name="AI Edge",
+            start_vlan_id=400,
+            start_network="10.66.0.0/24",
+            role_port_counts=(
+                RolePortCount("camera", 2),
+                RolePortCount("ai_server", 1),
+            ),
+            access_interfaces=interfaces(3),
+        )
+    )
+    assert [vlan.name for vlan in result.intent.vlans] == ["MGMT", "CAMERA", "AI_SERVER"]
+    assert [port.role for port in result.intent.ports] == ["camera", "camera", "ai_server"]
 
 
 def test_ai_camera_vms_template_builds_four_networks():
