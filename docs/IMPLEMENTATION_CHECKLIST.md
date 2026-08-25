@@ -57,7 +57,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P1.3 Read-only collector syntax
 
-- [ ] Discover/confirm exact syntax for current configuration/state collectors.
+- [ ] Discover/confirm exact syntax for the complete current configuration/state collector set.
 - [ ] Running configuration collector reviewed.
 - [ ] Startup configuration collector reviewed.
 - [ ] Interface/status collector reviewed.
@@ -66,7 +66,8 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [ ] LAG/LACP state collector reviewed.
 - [ ] IP/L3 interface collector reviewed.
 - [ ] Route state collector reviewed.
-- [ ] Management-plane state collector reviewed.
+- [x] Initial management-plane inventory subset reviewed: `show system`, `show version`, `show ip ssh`.
+- [ ] Full management-plane state collector reviewed.
 - [ ] Logging state collector reviewed.
 - [ ] SNMP state collector reviewed.
 - [ ] Time/NTP/SNTP state collector reviewed.
@@ -74,8 +75,8 @@ A checkbox is not complete because code exists. Completion requires implementati
 ### P1 exit criteria
 
 - [x] Exact target CBS250 capability registry/profile is versioned and exact-identity bound.
-- [ ] Read-only collectors have negative/safety tests.
-- [ ] No collector changes device configuration.
+- [x] Current 3-command read-only collector foundation has negative/safety tests; full P1.3 collector coverage remains pending.
+- [x] Current reviewed collector execution is exact-allowlist-only and changes no device configuration.
 - [x] Unknown/unproven capability states are represented explicitly and fail closed for future write precheck.
 
 ---
@@ -87,12 +88,15 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Define `DeviceFingerprint` schema.
 - [x] Define `DeviceCapability` schema.
 - [x] Define `ObservedState` schema.
-- [ ] Implement credential-session abstraction.
-- [ ] Implement connection/authentication error model.
-- [ ] Implement read-only collector orchestration.
-- [ ] Normalize collector output.
+- [x] Implement session-scoped credential abstraction with redacted representation.
+- [x] Implement structured connection/authentication/host-key/prompt/pagination/transport error model.
+- [x] Implement initial exact-allowlist read-only collector orchestration.
+- [x] Normalize initial identity/firmware/SSH output into `DeviceFingerprint`, `ObservedState`, and fail-closed `CurrentNetworkState`.
 - [x] Add required collection timestamps/source revision fields to normalized state.
-- [ ] Add evidence export.
+- [x] Add sanitized JSON/TXT evidence export for the initial collector subset.
+- [x] Mark incomplete collector state as `observed_partial`; absence is never authoritative.
+- [x] Add optional SSH host-key SHA-256 pinning.
+- [x] Add Windows-friendly CLI entry point with interactive password prompt and no password CLI argument.
 
 ### P2.2 Frontend
 
@@ -110,20 +114,24 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P2.3 Tests
 
-- [ ] Wrong password.
-- [ ] SSH unreachable.
+- [x] Wrong-password failure path unit-tested with credential redaction.
+- [x] SSH-unreachable failure path unit-tested with stable safe error.
 - [x] Exact profile/product/firmware mismatch validation.
-- [ ] Unsupported/unknown product discovery behavior.
-- [ ] Unsupported/unknown firmware discovery behavior.
-- [ ] Partial collector failure.
-- [ ] No-secret logging test.
-- [x] Offline intent/profile core cannot import device/network execution libraries.
+- [x] Unknown/unparseable product identity withholds planner state instead of guessing.
+- [ ] Unsupported exact product live-device behavior.
+- [ ] Unsupported exact firmware live-device behavior.
+- [x] Partial collector failure is explicit and remains `observed_partial`.
+- [x] No-secret error/export tests for the initial collector subset.
+- [x] Forbidden/state-changing command is rejected before transport execution.
+- [x] Offline intent/profile/planner core cannot import device/network execution libraries.
+- [ ] Physical CBS250 run of the new P2 collector and parser verification against real output.
 
 ### P2 exit criteria
 
-- [ ] User can connect and inspect without any write.
-- [ ] Exact device/firmware shown in product UI/API.
-- [ ] Collector failures are explicit, not hidden.
+- [ ] User can connect to the physical target and inspect the complete MVP managed scope without any write.
+- [x] Backend/CLI path can display exact normalized device/firmware when parsing succeeds; physical P2 validation remains pending.
+- [x] Collector failures are explicit, not hidden.
+- [ ] VLAN/port/L3/management state required by the planner is complete enough to use `observed_complete`.
 
 ---
 
@@ -234,32 +242,37 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P4.3 Planner
 
-- [ ] Current-state to desired-state diff.
-- [ ] Stable typed operation IDs.
-- [ ] Operation dependency graph.
-- [ ] Risk class per operation.
-- [ ] Verification method per operation.
-- [ ] Idempotency test: compliant state => zero changes.
-- [ ] Human-readable plan.
-- [ ] Machine-readable plan.
-- [ ] Stable plan hash.
+- [x] Current-state to desired-state semantic diff.
+- [x] Stable typed operation IDs.
+- [x] Operation dependency graph.
+- [x] Risk class per operation.
+- [x] Verification method per operation.
+- [x] Rollback metadata without inventing destructive reversal commands.
+- [x] Idempotency test: compliant state => zero changes.
+- [x] Human-readable plan.
+- [x] Machine-readable plan.
+- [x] Stable plan hash.
+- [x] Partial current-state basis blocks absence-dependent provider readiness.
+- [x] No implicit removal; unmanaged/current-only objects are preserved explicitly.
 
-### P4.4 Dry run UX
+### P4.4 Dry run UX/backend contract
 
-- [ ] Current state view.
-- [x] Desired-state design preview (pre-diff foundation only).
-- [ ] Add/change/remove distinction.
+- [x] Current normalized state view.
+- [x] Desired-state design preview.
+- [x] Add/change distinction plus explicit no-implicit-removal/preserved-current-object behavior.
 - [x] Security rule risk/capability state visible in offline preview.
-- [ ] Consolidated plan risk summary.
+- [x] Consolidated plan risk summary.
 - [x] Capability warnings visible in exact-device-aware offline preview.
-- [ ] Management-impact summary.
-- [ ] Export plan.
+- [x] Management-impact summary with `lockout_analysis_complete=false` and `safe_to_apply=false`.
+- [x] Deterministic JSON/TXT dry-run export with SHA-256 manifest.
+- [x] Explicit `execution_authority=false` and `device_commands_generated=false` throughout the dry-run contract.
 
 ### P4 exit criteria
 
 - [x] Implemented templates compile to normalized intent, never raw CLI.
 - [x] Built-in security profiles compile to normalized rules, never raw CLI.
-- [ ] Dry-run plan can be fully generated with write authority still FALSE.
+- [x] Offline dry-run plan can be generated and exported with write authority still FALSE.
+- [x] P4 never claims management lockout safety; that authority remains reserved for P6.
 
 ---
 
