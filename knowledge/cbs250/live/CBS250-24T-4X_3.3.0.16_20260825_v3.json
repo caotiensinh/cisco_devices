@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "knowledge_type": "live_cli_discovery_evidence",
+  "source_tool_version": "3.0.0",
+  "observed_at_utc": "2026-08-25T05:35:41.162265+00:00",
+  "scope": {
+    "vendor": "Cisco",
+    "family": "Cisco Business 250 Series",
+    "model": "CBS250-24T-4X",
+    "firmware": "3.3.0.16",
+    "mode": "privileged_exec",
+    "global_config_discovered": false
+  },
+  "privacy": {
+    "operational_identifiers_committed": false,
+    "redacted_fields": [
+      "management_ip",
+      "username",
+      "system_mac",
+      "ssh_host_key_fingerprint",
+      "active_session_source_ip"
+    ]
+  },
+  "safety_evidence": {
+    "mode": "INVESTIGATION_ONLY",
+    "discovered_commands_executed": false,
+    "help_query_submitted_with_enter": false,
+    "bytes_sent_after_help_marker_per_query": 0,
+    "disposable_channel_per_help_query": true,
+    "ctrl_c_after_help_query": false,
+    "enter_after_help_query": false,
+    "hard_deny_exec_roots": [
+      "boot",
+      "clear",
+      "clock",
+      "configure",
+      "copy",
+      "crypto",
+      "debug",
+      "debug-mode",
+      "delete",
+      "dot1x",
+      "errdisable",
+      "green-ethernet",
+      "macro",
+      "mkdir",
+      "no",
+      "reload",
+      "rename",
+      "renew",
+      "rmdir",
+      "set",
+      "shutdown",
+      "system",
+      "test",
+      "write"
+    ],
+    "exact_read_only_exec_allowlist": [
+      "show ip ssh",
+      "show system",
+      "show version"
+    ],
+    "global_config_help_enabled": false,
+    "global_config_changes_allowed": false
+  },
+  "inventory_facts": {
+    "system_description": "CBS250-24T-4X 24-Port Gigabit Smart Switch with 10G Uplinks",
+    "temperature_celsius": 52,
+    "temperature_status": "OK",
+    "ssh": {
+      "server_enabled": true,
+      "port": 22,
+      "host_key_type": "ssh-rsa",
+      "host_key_bits": 2048,
+      "password_authentication_enabled": true,
+      "public_key_authentication_enabled": false,
+      "session_logging_enabled": false
+    },
+    "firmware": {
+      "version": "3.3.0.16",
+      "build_date": "23-Mar-2023",
+      "image_md5": "7decdf94fd5999afb7b07509896c693b",
+      "running_image_marked_inactive_after_reboot": true,
+      "alternate_image_marked_active_after_reboot": true
+    }
+  },
+  "discovery_result": {
+    "nodes_found": 774,
+    "help_queries": 679,
+    "errors": [
+      {
+        "mode": "privileged_exec",
+        "prefix": "boot system tftp://",
+        "error_type": "DiscoveryError",
+        "error": "Clean EXEC prompt not established: ''"
+      },
+      {
+        "mode": "privileged_exec",
+        "prefix": "boot system scp://",
+        "error_type": "SSHException",
+        "error": "Timeout opening channel."
+      }
+    ],
+    "limits": {
+      "max_depth": 7,
+      "max_nodes": 4000,
+      "delay_seconds": 0.1
+    },
+    "root_commands_observed": [
+      "boot",
+      "cbd",
+      "cd",
+      "clear",
+      "clock",
+      "configure",
+      "copy",
+      "crypto",
+      "debug-mode",
+      "delete",
+      "dir",
+      "disable",
+      "do",
+      "dot1x",
+      "errdisable",
+      "exit",
+      "green-ethernet",
+      "help",
+      "login",
+      "macro",
+      "mkdir",
+      "more"
+    ],
+    "root_count_observed": 22,
+    "known_root_count_from_prior_complete_manual_help": 39,
+    "completeness": "PARTIAL",
+    "completeness_reason": "root help output paged after the 22nd command (more); v3 intentionally sent zero bytes after ? and did not advance the pager",
+    "do_subtree_nodes": 388
+  },
+  "provenance": {
+    "source_files": {
+      "cbs250_capability_summary_v3.json": {
+        "sha256": "c93af624973ff76100c747417a874daed6980ea0f269445c2c9b245042c6b413",
+        "bytes": 1905
+      },
+      "cbs250_command_tree_v3.json": {
+        "sha256": "24660960e2709e16501bb6c9b3d15bea1ef62d8e7196e9857b762b2ea63d298d",
+        "bytes": 372440
+      },
+      "cbs250_raw_transcript_v3.txt": {
+        "sha256": "04430a2a5073d314abd958ee337793c82711074bb1b8caf01e3987fc46502392",
+        "bytes": 300802
+      }
+    },
+    "raw_evidence_committed": false,
+    "note": "Raw transcript omitted from public repo; hashes preserve provenance. The normalized record contains reusable platform facts and discovery quality/safety evidence."
+  }
+}
