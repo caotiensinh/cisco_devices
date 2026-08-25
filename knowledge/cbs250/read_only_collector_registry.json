@@ -10,7 +10,7 @@
   "target_scope": {
     "family": "CBS250",
     "exact_live_reference_model": "CBS250-24T-4X",
-    "exact_live_reference_firmware": "3.3.0.16"
+    "exact_live_reference_firmware": "3.5.3.3"
   },
   "commands": [
     {
@@ -18,7 +18,7 @@
       "collector_id": "device_system_identity",
       "risk_class": "R0",
       "automation_status": "approved",
-      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
       "normalizes": [
         "DeviceFingerprint.product_id",
         "system_description",
@@ -32,7 +32,7 @@
       "collector_id": "device_firmware_identity",
       "risk_class": "R0",
       "automation_status": "approved",
-      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
       "normalizes": [
         "DeviceFingerprint.firmware_version"
       ],
@@ -43,7 +43,7 @@
       "collector_id": "ssh_management_state",
       "risk_class": "R0",
       "automation_status": "approved",
-      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
       "normalizes": [
         "ObservedState.capabilities.ssh_management",
         "CurrentManagementState.services"
@@ -51,6 +51,7 @@
       "planner_scope_complete": false
     }
   ],
-  "blocked_expansion_rule": "No additional command may be automated until exact syntax, R0 semantics, exact-target evidence, safety tests, registry approval, and cbs250_safety allowlist approval all exist.",
+  "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
+  "blocked_expansion_rule": "No additional command may be automated until exact syntax, R0 semantics, exact-target live execution output, parser coverage, safety tests, registry approval, and cbs250_safety allowlist approval all exist.",
   "current_planner_scope_complete": false
 }
