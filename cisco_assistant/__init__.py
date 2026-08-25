@@ -1,7 +1,7 @@
 """Core deterministic models and planning helpers for Cisco Network Configuration Assistant.
 
 This package is intentionally device-write-free. It contains only normalized data models,
-network arithmetic, offline capability profiles, and validation primitives.
+network arithmetic, offline capability profiles/templates/previews, and validation primitives.
 """
 
 from .ipam import (
@@ -29,6 +29,14 @@ from .models import (
     UplinkIntent,
     VLANIntent,
 )
+from .preview import (
+    DesignPreview,
+    PortPreviewRow,
+    PreviewIssue,
+    UplinkPreviewRow,
+    VLANPreviewRow,
+    build_design_preview,
+)
 from .profiles import (
     DeviceProfile,
     HardwareCapacity,
@@ -39,6 +47,19 @@ from .profiles import (
     load_device_profile,
     validate_intent_against_profile,
 )
+from .templates import (
+    TEMPLATE_SCHEMA_VERSION,
+    RolePortCount,
+    TemplateBuildResult,
+    TemplateDefinition,
+    TemplateError,
+    TemplateId,
+    TemplateRequest,
+    TemplateRole,
+    build_template,
+    get_template_definition,
+    list_templates,
+)
 from .validation import (
     ValidationIssue,
     ValidationResult,
@@ -48,6 +69,7 @@ from .validation import (
 
 __all__ = [
     "CapabilityState",
+    "DesignPreview",
     "DeviceCapability",
     "DeviceFingerprint",
     "DeviceProfile",
@@ -59,22 +81,38 @@ __all__ = [
     "ObservedState",
     "PortIntent",
     "PortMode",
+    "PortPreviewRow",
+    "PreviewIssue",
     "ProfileError",
     "ResourceLimits",
+    "RolePortCount",
     "RoutingIntent",
     "SecurityIntent",
     "SecurityProfile",
     "SegmentationAction",
     "SegmentationIntent",
     "SegmentationRule",
+    "TEMPLATE_SCHEMA_VERSION",
+    "TemplateBuildResult",
+    "TemplateDefinition",
+    "TemplateError",
+    "TemplateId",
+    "TemplateRequest",
+    "TemplateRole",
     "UplinkIntent",
+    "UplinkPreviewRow",
     "VLANIntent",
+    "VLANPreviewRow",
     "ValidationIssue",
     "ValidationResult",
     "ValidationSeverity",
+    "build_design_preview",
+    "build_template",
     "generate_sequential_networks",
     "generate_vlan_series",
     "generate_vlan_series_for_profile",
+    "get_template_definition",
+    "list_templates",
     "load_cbs250_24t_4x_3_3_0_16_profile",
     "load_device_profile",
     "subnet_facts",
