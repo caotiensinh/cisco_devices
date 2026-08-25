@@ -168,7 +168,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Reject gateway=broadcast address where applicable.
 - [x] Overflow/exhaustion errors.
 - [x] Unit tests for /30-/16 representative ranges.
-- [ ] Broader randomized/property tests.
+- [x] Deterministic randomized/property tests across prefixes, gateways, sequential networks, VLAN arithmetic and IPv4 exhaustion.
 
 ### P3.3 VLAN generator
 
@@ -200,7 +200,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 ### P3 exit criteria
 
 - [ ] User can build every selected MVP design through a stable external API/UI.
-- [ ] Broader IPAM property/boundary test suite complete.
+- [x] Broader IPAM property/boundary test suite complete for the current IPv4 scope.
 - [x] No device CLI generation or device access is required for P3 validation.
 
 ---
@@ -212,12 +212,12 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Versioned template schema (`schema_version=1`, initial templates `1.0.0`).
 - [x] Typed template parameters compile to normalized `NetworkIntent`.
 - [x] Structured + human-readable deterministic template preview.
-- [ ] Template migration/versioning rules and migration tooling.
+- [x] Explicit fail-closed template migration/versioning framework; no silent migration without registered/tested edges.
 - [x] Small Office.
-- [ ] Office + Guest Wi-Fi (separate production template; guest role exists in Small Office foundation).
+- [x] Office + Guest Wi-Fi.
 - [x] Office + IP Cameras.
-- [ ] Camera + VMS (standalone template).
-- [ ] AI Camera / AI Server (standalone template).
+- [x] Camera + VMS.
+- [x] AI Camera / AI Server.
 - [x] AI Camera / VMS composite foundation for camera + AI-server + VMS roles.
 - [ ] Retail Store.
 - [ ] R&D Laboratory.
@@ -225,7 +225,8 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [ ] IP-KVM Management Network.
 - [ ] Custom.
 - [x] Template engine does not invent physical interface names; inventory/UI remains interface authority.
-- [x] Template/preview modules are enforced as offline-only by CI boundary tests.
+- [x] Template/preview/migration modules are enforced as offline-only by CI boundary tests.
+- [x] Beginner template catalog documents explicit assumptions and unresolved topology/security questions.
 
 ### P4.2 Security profiles
 
