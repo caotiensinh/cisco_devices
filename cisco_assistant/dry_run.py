@@ -1,7 +1,8 @@
 """End-to-end offline dry-run orchestration.
 
-This joins exact-device-aware design validation with the semantic diff planner and plan-impact
-analysis. It stops strictly before provider compilation/execution and cannot generate CLI.
+This joins normalized current state, exact-device-aware desired design, semantic diff planning,
+and impact analysis. It stops strictly before provider compilation/execution and cannot
+generate CLI.
 """
 from __future__ import annotations
 
@@ -12,12 +13,14 @@ from .models import ObservedState
 from .plan_analysis import PlanAnalysis, analyze_change_plan
 from .planner import ChangePlan, build_change_plan
 from .profiles import DeviceProfile
+from .state_view import CurrentStatePreview, build_current_state_preview
 from .templates import TemplateRequest
 from .workflow import DeviceAwareDesignPreview, build_device_aware_design_preview
 
 
 @dataclass(frozen=True, slots=True)
 class DeviceAwareDryRun:
+    current: CurrentStatePreview
     design: DeviceAwareDesignPreview
     plan: ChangePlan
     analysis: PlanAnalysis
@@ -49,6 +52,7 @@ class DeviceAwareDryRun:
             "provider_ready": self.provider_ready,
             "execution_authority": False,
             "device_commands_generated": False,
+            "current_state": self.current.as_dict(),
             "design": self.design.as_dict(),
             "change_plan": self.plan.as_dict(),
             "plan_analysis": self.analysis.as_dict(),
@@ -62,6 +66,8 @@ class DeviceAwareDryRun:
                 f"Status: {self.status}",
                 "Execution authority: FALSE",
                 "Device commands generated: NO",
+                "",
+                self.current.render_text(),
                 "",
                 self.design.render_text(),
                 "",
@@ -88,6 +94,7 @@ def build_device_aware_dry_run(
     require_live_proof: bool = False,
 ) -> DeviceAwareDryRun:
     """Build one complete offline dry run from beginner parameters to semantic change plan."""
+    current = build_current_state_preview(current_state)
     design = build_device_aware_design_preview(
         request,
         profile,
@@ -101,4 +108,9 @@ def build_device_aware_dry_run(
         security_expansion=design.security_expansion,
     )
     analysis = analyze_change_plan(plan, design.template_result.intent)
-    return DeviceAwareDryRun(design=design, plan=plan, analysis=analysis)
+    return DeviceAwareDryRun(
+        current=current,
+        design=design,
+        plan=plan,
+        analysis=analysis,
+    )
