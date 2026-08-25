@@ -9,6 +9,7 @@ OFFLINE_CORE = [
     ROOT / "cisco_assistant" / "profiles.py",
     ROOT / "cisco_assistant" / "profile_registry.py",
     ROOT / "cisco_assistant" / "exact_device_workflow.py",
+    ROOT / "cisco_assistant" / "r0_evidence.py",
     ROOT / "cisco_assistant" / "templates.py",
     ROOT / "cisco_assistant" / "template_migrations.py",
     ROOT / "cisco_assistant" / "preview.py",
@@ -91,6 +92,7 @@ def test_offline_design_policy_planner_analysis_dry_run_and_export_do_not_embed_
     for relative in (
         "cisco_assistant/profile_registry.py",
         "cisco_assistant/exact_device_workflow.py",
+        "cisco_assistant/r0_evidence.py",
         "cisco_assistant/templates.py",
         "cisco_assistant/template_migrations.py",
         "cisco_assistant/preview.py",
