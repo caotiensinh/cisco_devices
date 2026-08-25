@@ -24,7 +24,7 @@ from cbs250_safety import READ_ONLY_EXEC_ALLOWLIST
 from cisco_assistant.read_only_collectors import parse_show_system, parse_show_version
 
 
-TOOL_VERSION = "1.0.1"
+TOOL_VERSION = "1.1.0"
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
 APPROVED_BINDING_COMMANDS = frozenset({"show system", "show version"})
@@ -126,6 +126,39 @@ def probe_prefix(crawler: CBS250ReadOnlyCrawler, prefix: str) -> dict[str, objec
     }
 
 
+def classify_probe_results(results: list[dict[str, object]]) -> dict[str, object]:
+    """Separate transport/query safety from grammar-evidence completeness."""
+    expected_count = len(L3_HELP_PREFIXES)
+    safety_pass = len(results) == expected_count and all(
+        result.get("candidate_command_executed") is False
+        and result.get("help_query_submitted_with_enter") is False
+        and result.get("bytes_sent_after_help_marker") == 0
+        and result.get("channel_closed_immediately") is True
+        and result.get("error") is None
+        for result in results
+    )
+    evidence_complete = safety_pass and all(
+        result.get("paginated") is False
+        and result.get("terminal_cr_observed") is True
+        for result in results
+    )
+
+    if not safety_pass:
+        status = "BLOCKED_SAFETY"
+    elif not evidence_complete:
+        status = "BLOCKED_INCOMPLETE_EVIDENCE"
+    else:
+        status = "PASS_COMPLETE"
+
+    return {
+        "status": status,
+        "safety_status": "PASS" if safety_pass else "BLOCKED",
+        "evidence_status": "COMPLETE" if evidence_complete else "INCOMPLETE",
+        "safety_pass": safety_pass,
+        "evidence_complete": evidence_complete,
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Exact-bound CBS250 3.5.3.3 L3 context-help probe; candidate commands are never executed"
@@ -188,7 +221,9 @@ def main() -> int:
             "schema_version": 1,
             "tool_version": TOOL_VERSION,
             "generated_at_utc": utc_now(),
-            "status": "BLOCKED",
+            "status": "BLOCKED_EXCEPTION",
+            "safety_status": "UNKNOWN",
+            "evidence_status": "INCOMPLETE",
             "error": f"{type(exc).__name__}: {exc}",
             "authority": {
                 "device_write_authority": False,
@@ -208,17 +243,14 @@ def main() -> int:
     finally:
         crawler.close()
 
-    safe = all(
-        result["bytes_sent_after_help_marker"] == 0
-        and result["channel_closed_immediately"] is True
-        and result["error"] is None
-        for result in results
-    )
+    classification = classify_probe_results(results)
     summary = {
         "schema_version": 1,
         "tool_version": TOOL_VERSION,
         "generated_at_utc": utc_now(),
-        "status": "PASS" if safe else "BLOCKED",
+        "status": classification["status"],
+        "safety_status": classification["safety_status"],
+        "evidence_status": classification["evidence_status"],
         "target": target,
         "authority": {
             "device_write_authority": False,
@@ -243,10 +275,12 @@ def main() -> int:
         crawler.transcript.text(), encoding="utf-8"
     )
 
-    print(f"[{'PASS' if safe else 'BLOCKED'}] Exact-target L3 context-help probe")
+    print(f"[{classification['status']}] Exact-target L3 context-help probe")
+    print(f"[+] Safety: {classification['safety_status']}")
+    print(f"[+] Evidence: {classification['evidence_status']}")
     print(f"[+] Target: {target['product_id']} / {target['firmware_version']}")
     print(f"[+] Output: {out_dir}")
-    return 0 if safe else 2
+    return 0 if classification["evidence_complete"] else 2
 
 
 if __name__ == "__main__":
