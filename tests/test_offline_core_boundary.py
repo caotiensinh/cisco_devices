@@ -16,6 +16,7 @@ OFFLINE_CORE = [
     ROOT / "cisco_assistant" / "planner.py",
     ROOT / "cisco_assistant" / "plan_analysis.py",
     ROOT / "cisco_assistant" / "dry_run.py",
+    ROOT / "cisco_assistant" / "export_bundle.py",
 ]
 FORBIDDEN_IMPORT_ROOTS = {
     "paramiko",
@@ -74,7 +75,7 @@ def test_offline_core_has_no_raw_cli_execution_api_names():
     assert not violations, f"Offline core exposed CLI/device execution APIs: {violations}"
 
 
-def test_offline_design_policy_planner_analysis_and_dry_run_do_not_embed_cisco_write_cli():
+def test_offline_design_policy_planner_analysis_dry_run_and_export_do_not_embed_cisco_write_cli():
     dangerous_fragments = {
         "configure terminal",
         "copy running-config startup-config",
@@ -94,9 +95,10 @@ def test_offline_design_policy_planner_analysis_and_dry_run_do_not_embed_cisco_w
         "cisco_assistant/planner.py",
         "cisco_assistant/plan_analysis.py",
         "cisco_assistant/dry_run.py",
+        "cisco_assistant/export_bundle.py",
     ):
         text = (ROOT / relative).read_text(encoding="utf-8").lower()
         found = sorted(fragment for fragment in dangerous_fragments if fragment in text)
         if found:
             violations[relative] = found
-    assert not violations, f"Offline design/policy/planner/analysis/dry-run layer embedded device write CLI: {violations}"
+    assert not violations, f"Offline design/policy/planner/analysis/dry-run/export layer embedded device write CLI: {violations}"
