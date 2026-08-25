@@ -5,6 +5,18 @@
   "current_phase": "P1_KNOWLEDGE_AND_SAFE_DISCOVERY",
   "global_device_write_authority": false,
   "production_network_write_authority": false,
+  "write_authority_activation_policy": {
+    "approval_marker_path": "governance/write_authority_approval.json",
+    "required_phase_prefix": "P6_",
+    "stale_marker_forbidden_when_authority_false": true,
+    "exact_target_binding_required": true,
+    "explicit_operation_scope_required": true,
+    "human_owner_approval_reference_required": true,
+    "test_release_pass_reference_required": true,
+    "security_gate_pass_reference_required": true,
+    "production_enablement_requires_explicit_marker_flag": true,
+    "destructive_class_d_allowed_by_marker": false
+  },
   "discovery_execution_authority": {
     "mode": "INVESTIGATION_ONLY",
     "discovered_commands_executed": false,
@@ -16,6 +28,7 @@
     "docs/PRODUCT_SPEC.md",
     "docs/IMPLEMENTATION_CHECKLIST.md",
     "docs/governance/AI_AGENT_HARNESS.md",
+    "docs/governance/WRITE_AUTHORITY_ACTIVATION.md",
     "docs/CBS250/discovery_safety_v3.md",
     "docs/CBS250/automation_capability_model.md"
   ],
@@ -52,6 +65,7 @@
     "Unknown capability fails closed",
     "Secrets are never committed or emitted into evidence",
     "Every future write is plan-first, diff-first, verify-before-persist",
-    "Destructive lifecycle operations are never autonomous by default"
+    "Destructive lifecycle operations are never autonomous by default",
+    "Write authority cannot be enabled by flag change alone"
   ]
 }
