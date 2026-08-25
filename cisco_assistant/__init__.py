@@ -1,7 +1,7 @@
 """Core deterministic models and planning helpers for Cisco Network Configuration Assistant.
 
 This package is intentionally device-write-free. It contains only normalized data models,
-network arithmetic, offline capability/security profiles, templates/previews, and validation.
+network arithmetic, offline capability/security profiles, templates/previews/workflows, and validation.
 """
 
 from .ipam import (
@@ -79,10 +79,16 @@ from .validation import (
     ValidationSeverity,
     validate_network_intent,
 )
+from .workflow import (
+    DeviceAwareDesignPreview,
+    TargetDevicePreview,
+    build_device_aware_design_preview,
+)
 
 __all__ = [
     "CapabilityState",
     "DesignPreview",
+    "DeviceAwareDesignPreview",
     "DeviceCapability",
     "DeviceFingerprint",
     "DeviceProfile",
@@ -114,6 +120,7 @@ __all__ = [
     "SegmentationIntent",
     "SegmentationRule",
     "TEMPLATE_SCHEMA_VERSION",
+    "TargetDevicePreview",
     "TemplateBuildResult",
     "TemplateDefinition",
     "TemplateError",
@@ -128,6 +135,7 @@ __all__ = [
     "ValidationResult",
     "ValidationSeverity",
     "build_design_preview",
+    "build_device_aware_design_preview",
     "build_template",
     "expand_security_profile",
     "generate_sequential_networks",
