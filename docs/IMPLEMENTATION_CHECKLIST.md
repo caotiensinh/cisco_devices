@@ -15,8 +15,8 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Product specification exists.
 - [x] Implementation checklist exists.
 - [x] Add CI check that required governance documents exist.
-- [ ] Add CI check that `global_device_write_authority=false` cannot be silently changed without a dedicated approval marker/review rule.
-- [ ] Add test/lint rule preventing secrets in committed evidence/examples.
+- [x] Add CI check that write authority cannot be silently enabled without a dedicated P6 approval marker and independent review evidence.
+- [x] Add test/lint rule preventing likely secrets in committed docs/knowledge/governance/examples.
 - [x] Add task-template contract for agents/issues.
 
 ### P0 exit criteria
