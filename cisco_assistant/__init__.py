@@ -1,9 +1,19 @@
 """Core deterministic models and planning helpers for Cisco Network Configuration Assistant.
 
-This package is intentionally device-write-free. It contains only normalized data models,
-network arithmetic, offline capability/security profiles, templates/previews/workflows, and validation.
+This package is intentionally device-write-free. It contains normalized data models,
+network arithmetic, offline current state, capability/security profiles, templates/previews,
+semantic diff planning/workflows, and validation.
 """
 
+from .current_state import (
+    CurrentAccessPortState,
+    CurrentManagementState,
+    CurrentNetworkState,
+    CurrentStateBasis,
+    CurrentStateError,
+    CurrentTrunkState,
+    CurrentVLANState,
+)
 from .ipam import (
     GatewayStrategy,
     IPv4SubnetFacts,
@@ -28,6 +38,17 @@ from .models import (
     SegmentationRule,
     UplinkIntent,
     VLANIntent,
+)
+from .planner import (
+    PLAN_SCHEMA_VERSION,
+    ChangePlan,
+    OperationReadiness,
+    OperationType,
+    PlannedOperation,
+    RollbackSpec,
+    RollbackStrategy,
+    VerificationSpec,
+    build_change_plan,
 )
 from .preview import (
     DesignPreview,
@@ -87,6 +108,14 @@ from .workflow import (
 
 __all__ = [
     "CapabilityState",
+    "ChangePlan",
+    "CurrentAccessPortState",
+    "CurrentManagementState",
+    "CurrentNetworkState",
+    "CurrentStateBasis",
+    "CurrentStateError",
+    "CurrentTrunkState",
+    "CurrentVLANState",
     "DesignPreview",
     "DeviceAwareDesignPreview",
     "DeviceCapability",
@@ -99,6 +128,10 @@ __all__ = [
     "ManagementIntent",
     "NetworkIntent",
     "ObservedState",
+    "OperationReadiness",
+    "OperationType",
+    "PLAN_SCHEMA_VERSION",
+    "PlannedOperation",
     "PortIntent",
     "PortMode",
     "PortPreviewRow",
@@ -106,6 +139,8 @@ __all__ = [
     "ProfileError",
     "ResourceLimits",
     "RolePortCount",
+    "RollbackSpec",
+    "RollbackStrategy",
     "RoutingIntent",
     "RuleRequirement",
     "RuleSeverity",
@@ -134,6 +169,8 @@ __all__ = [
     "ValidationIssue",
     "ValidationResult",
     "ValidationSeverity",
+    "VerificationSpec",
+    "build_change_plan",
     "build_design_preview",
     "build_device_aware_design_preview",
     "build_template",
