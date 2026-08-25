@@ -33,8 +33,10 @@ def test_ready_candidate_ingestion_is_digest_only_and_unverified():
     payload = record.as_dict()
     assert record.command == "show vlan"
     assert record.verification_status == INGESTED_STATUS
-    assert record.output_sha256.startswith("sha256:")
-    assert record.output_bytes > 0
+    assert record.raw_text_sha256.startswith("sha256:")
+    assert record.canonical_text_sha256.startswith("sha256:")
+    assert record.raw_text_bytes > 0
+    assert record.canonical_text_bytes > 0
     assert record.execution_authority is False
     assert record.device_write_authority is False
     assert record.promoted_to_execution_allowlist is False
@@ -44,7 +46,7 @@ def test_ready_candidate_ingestion_is_digest_only_and_unverified():
     assert "default" not in json.dumps(payload)
 
 
-def test_line_ending_normalization_makes_digest_deterministic():
+def test_line_ending_digests_preserve_raw_provenance_and_canonical_comparison():
     common = dict(
         command="show interfaces status",
         product_id="CBS250-24T-4X",
@@ -53,8 +55,11 @@ def test_line_ending_normalization_makes_digest_deterministic():
     )
     windows = ingest_external_r0_output(raw_output="a\r\nb\r\n", **common)
     unix = ingest_external_r0_output(raw_output="a\nb\n", **common)
-    assert windows.output_sha256 == unix.output_sha256
-    assert windows.output_bytes == unix.output_bytes
+
+    assert windows.raw_text_sha256 != unix.raw_text_sha256
+    assert windows.raw_text_bytes != unix.raw_text_bytes
+    assert windows.canonical_text_sha256 == unix.canonical_text_sha256
+    assert windows.canonical_text_bytes == unix.canonical_text_bytes
 
 
 def test_exact_firmware_mismatch_is_blocked():
