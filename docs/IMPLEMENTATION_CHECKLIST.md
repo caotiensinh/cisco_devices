@@ -201,20 +201,23 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P4.1 Template framework
 
-- [ ] Versioned template schema.
-- [ ] Template parameters.
-- [ ] Template preview.
-- [ ] Template migration/versioning rules.
-- [ ] Small Office.
-- [ ] Office + Guest Wi-Fi.
-- [ ] Office + IP Cameras.
-- [ ] Camera + VMS.
-- [ ] AI Camera / AI Server.
+- [x] Versioned template schema (`schema_version=1`, initial templates `1.0.0`).
+- [x] Typed template parameters compile to normalized `NetworkIntent`.
+- [x] Structured + human-readable deterministic template preview.
+- [ ] Template migration/versioning rules and migration tooling.
+- [x] Small Office.
+- [ ] Office + Guest Wi-Fi (separate production template; guest role exists in Small Office foundation).
+- [x] Office + IP Cameras.
+- [ ] Camera + VMS (standalone template).
+- [ ] AI Camera / AI Server (standalone template).
+- [x] AI Camera / VMS composite foundation for camera + AI-server + VMS roles.
 - [ ] Retail Store.
 - [ ] R&D Laboratory.
 - [ ] Secure Management Network.
 - [ ] IP-KVM Management Network.
 - [ ] Custom.
+- [x] Template engine does not invent physical interface names; inventory/UI remains interface authority.
+- [x] Template/preview modules are enforced as offline-only by CI boundary tests.
 
 ### P4.2 Security profiles
 
@@ -242,16 +245,16 @@ A checkbox is not complete because code exists. Completion requires implementati
 ### P4.4 Dry run UX
 
 - [ ] Current state view.
-- [ ] Desired state view.
+- [x] Desired-state design preview (pre-diff foundation only).
 - [ ] Add/change/remove distinction.
 - [ ] Risk summary.
-- [ ] Capability warnings.
+- [ ] Capability warnings in final dry-run view.
 - [ ] Management-impact summary.
 - [ ] Export plan.
 
 ### P4 exit criteria
 
-- [ ] Templates compile to normalized intent, never raw CLI.
+- [x] Implemented templates compile to normalized intent, never raw CLI.
 - [ ] Security profiles compile to normalized rules, never raw CLI.
 - [ ] Dry-run plan can be fully generated with write authority still FALSE.
 
