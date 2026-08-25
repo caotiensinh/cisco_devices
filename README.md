@@ -1,6 +1,34 @@
 # Cisco Devices Automation
 
-Tools for discovering and automating Cisco device capabilities safely.
+Tools and knowledge for discovering, understanding and automating Cisco device capabilities safely.
+
+## CBS250 knowledge base
+
+The repository now contains a Cisco-official documentation baseline for Cisco Business 250 Series Smart Switches under:
+
+```text
+docs/CBS250/
+├── README.md
+├── platform_and_limits.md
+├── secure_operations_baseline.md
+├── switching_routing_services.md
+├── observability_lifecycle.md
+├── automation_capability_model.md
+└── official_sources.md
+
+knowledge/cbs250/
+├── observed_exec_root.json
+└── platform_baseline.json
+```
+
+The knowledge model deliberately separates:
+
+- Cisco-documented feature semantics and resource limits;
+- exact firmware release caveats;
+- exact live CLI capability observed from the target switch;
+- automation safety/risk classification.
+
+Start with `docs/CBS250/README.md`.
 
 ## CBS250 CLI Capability Discovery v2.1
 
@@ -71,25 +99,6 @@ python .\cbs250_cli_discovery.py `
 ```
 
 The password is requested with a hidden prompt and is not written to the output files.
-
-Before running, verify on the switch:
-
-```text
-show ip ssh
-```
-
-Expected SSH state includes:
-
-```text
-SSH Server enabled. Port: 22
-SSH Password Authentication is enabled.
-```
-
-For older OpenSSH clients/servers, a manual connectivity check may require:
-
-```powershell
-ssh -o HostKeyAlgorithms=+ssh-rsa admin@192.168.11.6
-```
 
 ### Output
 
