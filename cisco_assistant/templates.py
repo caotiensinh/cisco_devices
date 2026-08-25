@@ -32,7 +32,10 @@ class TemplateError(ModelValidationError):
 
 class TemplateId(str, Enum):
     SMALL_OFFICE = "small_office"
+    OFFICE_GUEST_WIFI = "office_guest_wifi"
     OFFICE_IP_CAMERAS = "office_ip_cameras"
+    CAMERA_VMS = "camera_vms"
+    AI_CAMERA_SERVER = "ai_camera_server"
     AI_CAMERA_VMS = "ai_camera_vms"
 
 
@@ -94,7 +97,7 @@ class RolePortCount:
 
 @dataclass(frozen=True, slots=True)
 class TemplateRequest:
-    """User/site parameters shared by the first guided templates.
+    """User/site parameters shared by guided templates.
 
     ``access_interfaces`` is intentionally provided by inventory/UI instead of generated from
     an assumed Cisco interface naming convention. This keeps the template engine device-neutral
@@ -202,6 +205,16 @@ class TemplateBuildResult:
     notes: tuple[str, ...]
 
 
+def _management_role() -> TemplateRole:
+    return TemplateRole(
+        "management",
+        "Management",
+        "MGMT",
+        "management",
+        assignable_access_ports=False,
+    )
+
+
 TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
     TemplateId.SMALL_OFFICE: TemplateDefinition(
         template_id=TemplateId.SMALL_OFFICE,
@@ -211,13 +224,7 @@ TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
             "Dedicated management, office-user, and guest segments for a small office."
         ),
         roles=(
-            TemplateRole(
-                "management",
-                "Management",
-                "MGMT",
-                "management",
-                assignable_access_ports=False,
-            ),
+            _management_role(),
             TemplateRole("office", "Office", "OFFICE", "office"),
             TemplateRole("guest", "Guest", "GUEST", "guest"),
         ),
@@ -225,6 +232,24 @@ TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
             "Management is modeled as a dedicated VLAN.",
             "Guest isolation policy is expressed later by the security/segmentation planner.",
             "No routing placement is assumed unless inter_vlan_routing is explicitly requested.",
+        ),
+    ),
+    TemplateId.OFFICE_GUEST_WIFI: TemplateDefinition(
+        template_id=TemplateId.OFFICE_GUEST_WIFI,
+        version="1.0.0",
+        display_name="Office + Guest Wi-Fi",
+        description=(
+            "Dedicated management, office, and guest Wi-Fi segments for sites with managed wireless access."
+        ),
+        roles=(
+            _management_role(),
+            TemplateRole("office", "Office", "OFFICE", "office"),
+            TemplateRole("guest", "Guest Wi-Fi", "GUEST_WIFI", "guest"),
+        ),
+        assumptions=(
+            "Guest Wi-Fi is a separate security segment and must not inherit office trust.",
+            "The template does not assume an access point's tagged/native VLAN behavior; AP trunk mapping is a topology step.",
+            "Internet-only guest policy requires explicit routing/firewall/segmentation design outside this template.",
         ),
     ),
     TemplateId.OFFICE_IP_CAMERAS: TemplateDefinition(
@@ -235,13 +260,7 @@ TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
             "Dedicated management, office-user, and IP-camera segments for mixed office/video sites."
         ),
         roles=(
-            TemplateRole(
-                "management",
-                "Management",
-                "MGMT",
-                "management",
-                assignable_access_ports=False,
-            ),
+            _management_role(),
             TemplateRole("office", "Office", "OFFICE", "office"),
             TemplateRole("camera", "IP Cameras", "CAMERA", "camera"),
         ),
@@ -249,6 +268,42 @@ TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
             "Camera/office reachability is not silently granted; segmentation is a later explicit policy decision.",
             "No Internet policy is inferred from the template alone.",
             "No routing placement is assumed unless inter_vlan_routing is explicitly requested.",
+        ),
+    ),
+    TemplateId.CAMERA_VMS: TemplateDefinition(
+        template_id=TemplateId.CAMERA_VMS,
+        version="1.0.0",
+        display_name="Camera + VMS",
+        description=(
+            "Dedicated management, camera, and VMS segments for recording/monitoring deployments without a separate AI-server tier."
+        ),
+        roles=(
+            _management_role(),
+            TemplateRole("camera", "IP Cameras", "CAMERA", "camera"),
+            TemplateRole("vms", "VMS", "VMS", "vms"),
+        ),
+        assumptions=(
+            "Camera-to-VMS reachability is a required design question, not an implicit ACL decision.",
+            "Camera Internet access is not inferred.",
+            "Multicast/IGMP and QoS requirements are separate explicit design inputs.",
+        ),
+    ),
+    TemplateId.AI_CAMERA_SERVER: TemplateDefinition(
+        template_id=TemplateId.AI_CAMERA_SERVER,
+        version="1.0.0",
+        display_name="AI Camera / AI Server",
+        description=(
+            "Dedicated management, camera, and AI-server segments for edge video analytics without a separate VMS segment."
+        ),
+        roles=(
+            _management_role(),
+            TemplateRole("camera", "IP Cameras", "CAMERA", "camera"),
+            TemplateRole("ai_server", "AI Servers", "AI_SERVER", "ai_server"),
+        ),
+        assumptions=(
+            "Camera-to-AI-server reachability must be defined explicitly by later segmentation policy.",
+            "AI-server Internet/update access is not inferred.",
+            "Bandwidth/QoS sizing remains a separate explicit design step.",
         ),
     ),
     TemplateId.AI_CAMERA_VMS: TemplateDefinition(
@@ -259,13 +314,7 @@ TEMPLATE_REGISTRY: dict[TemplateId, TemplateDefinition] = {
             "Dedicated management, camera, AI-server, and VMS segments for video analytics deployments."
         ),
         roles=(
-            TemplateRole(
-                "management",
-                "Management",
-                "MGMT",
-                "management",
-                assignable_access_ports=False,
-            ),
+            _management_role(),
             TemplateRole("camera", "IP Cameras", "CAMERA", "camera"),
             TemplateRole("ai_server", "AI Servers", "AI_SERVER", "ai_server"),
             TemplateRole("vms", "VMS", "VMS", "vms"),
