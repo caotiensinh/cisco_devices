@@ -1,7 +1,7 @@
 """End-to-end offline dry-run orchestration.
 
-This joins exact-device-aware design validation with the semantic diff planner. It still stops
-strictly before any provider compiler or executor and therefore cannot generate or run CLI.
+This joins exact-device-aware design validation with the semantic diff planner and plan-impact
+analysis. It stops strictly before provider compilation/execution and cannot generate CLI.
 """
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from .current_state import CurrentNetworkState
 from .models import ObservedState
+from .plan_analysis import PlanAnalysis, analyze_change_plan
 from .planner import ChangePlan, build_change_plan
 from .profiles import DeviceProfile
 from .templates import TemplateRequest
@@ -19,6 +20,7 @@ from .workflow import DeviceAwareDesignPreview, build_device_aware_design_previe
 class DeviceAwareDryRun:
     design: DeviceAwareDesignPreview
     plan: ChangePlan
+    analysis: PlanAnalysis
     device_commands_generated: bool = False
     execution_authority: bool = False
 
@@ -49,6 +51,7 @@ class DeviceAwareDryRun:
             "device_commands_generated": False,
             "design": self.design.as_dict(),
             "change_plan": self.plan.as_dict(),
+            "plan_analysis": self.analysis.as_dict(),
         }
 
     def render_text(self) -> str:
@@ -64,10 +67,13 @@ class DeviceAwareDryRun:
                 "",
                 self.plan.render_text(),
                 "",
+                self.analysis.render_text(),
+                "",
                 "DRY RUN RESULT",
                 "==============",
                 f"Design valid: {'YES' if self.design_valid else 'NO'}",
                 f"Provider ready: {'YES' if self.provider_ready else 'NO'}",
+                "Lockout analysis complete: NO",
                 "Execution allowed: NO",
             ]
         )
@@ -94,4 +100,5 @@ def build_device_aware_dry_run(
         device_profile=profile,
         security_expansion=design.security_expansion,
     )
-    return DeviceAwareDryRun(design=design, plan=plan)
+    analysis = analyze_change_plan(plan, design.template_result.intent)
+    return DeviceAwareDryRun(design=design, plan=plan, analysis=analysis)
