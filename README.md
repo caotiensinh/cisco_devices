@@ -2,6 +2,36 @@
 
 Tools and knowledge for discovering, understanding and automating Cisco device capabilities safely.
 
+## Project contract
+
+This repository is governed by a project-wide AI/automation harness. Every agent or developer must start with:
+
+- `AGENTS.md` — mandatory scope/safety contract;
+- `governance/project_scope.json` — machine-readable current phase and authority;
+- `docs/governance/AI_AGENT_HARNESS.md` — detailed AI-agent containment and task rules;
+- `docs/PRODUCT_VISION.md` — product idea, practical goals and target users;
+- `docs/PRODUCT_SPEC.md` — functional/non-functional specification;
+- `docs/IMPLEMENTATION_CHECKLIST.md` — phased roadmap and release gates.
+
+The core product architecture is:
+
+```text
+User Intent
+  -> Normalized Network Model
+  -> Deterministic Validation
+  -> Exact Device Capability Check
+  -> Desired State
+  -> Diff / Typed Plan
+  -> Device-Specific Compiler
+  -> Safety Gate
+  -> Controlled Execution (future explicitly authorized phase)
+  -> Verification
+  -> Persist only after verification
+  -> Audit Evidence
+```
+
+The current project phase grants **no device configuration/write authority**. Discovery and planning remain separated from any future execution subsystem.
+
 ## CBS250 knowledge base
 
 Cisco-official documentation and normalized live evidence live under:
