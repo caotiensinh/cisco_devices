@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "platform_family": "Cisco Business 250 Series Smart Switches",
+  "authority": "Cisco official documentation; family-level until live-bound to exact SKU/firmware",
+  "limits": {
+    "active_vlans": 255,
+    "mst_instances": 8,
+    "pvst_instances": 126,
+    "rapid_pvst_instances": 126,
+    "lag_groups": 4,
+    "active_ports_per_lag": 8,
+    "dynamic_lag_candidates": 16,
+    "igmp_multicast_groups": 255,
+    "ipv4_static_routes": 32,
+    "ip_interfaces": 16,
+    "acl_rules": 512,
+    "hardware_qos_queues": 8,
+    "mac_table_addresses": 8192,
+    "jumbo_frame_bytes_max": 9000,
+    "syslog_buffer_messages_min": 20,
+    "syslog_buffer_messages_max": 1000,
+    "syslog_buffer_default": 1000
+  },
+  "documented_defaults": {
+    "stp_mode": "rstp",
+    "syslog_buffer_severity": "informational",
+    "syslog_file_severity": "errors",
+    "syslog_remote_hosts": "none",
+    "http_service": "enabled_factory_default",
+    "https_service": "enabled_factory_default",
+    "snmp_service": "disabled_factory_default",
+    "telnet_service": "disabled_factory_default",
+    "ssh_service": "disabled_factory_default"
+  },
+  "features": {
+    "layer2": [
+      "802.1Q VLAN",
+      "management VLAN",
+      "guest VLAN",
+      "voice VLAN",
+      "STP",
+      "RSTP",
+      "MSTP",
+      "PVST+",
+      "Rapid-PVST+",
+      "LACP",
+      "GVRP/GARP",
+      "IGMP snooping v1/v2/v3",
+      "IGMP querier",
+      "MLD snooping v1/v2",
+      "loopback detection"
+    ],
+    "layer3": [
+      "IPv4 static routing",
+      "IPv6 routing",
+      "Layer-3 physical/LAG/VLAN/loopback interfaces",
+      "CIDR",
+      "DHCP relay",
+      "UDP relay"
+    ],
+    "security": [
+      "HTTPS",
+      "SSH",
+      "SCP",
+      "802.1X authenticator",
+      "RADIUS",
+      "management ACL",
+      "port security",
+      "storm control",
+      "DoS prevention",
+      "MAC/IPv4/IPv6 ACL",
+      "time-based ACL",
+      "Secure Sensitive Data"
+    ],
+    "management": [
+      "scriptable CLI",
+      "web UI",
+      "SNMPv1/v2c/v3",
+      "RMON",
+      "remote syslog",
+      "SPAN/VLAN mirroring",
+      "Cisco Business Dashboard embedded probe",
+      "Cisco Network Plug and Play",
+      "LLDP/LLDP-MED",
+      "CDP",
+      "TFTP",
+      "SCP",
+      "dual firmware images"
+    ],
+    "qos": [
+      "Basic QoS",
+      "Advanced QoS",
+      "Strict Priority",
+      "Weighted Round Robin",
+      "802.1p/CoS",
+      "DSCP/DiffServ",
+      "ingress policing",
+      "egress shaping"
+    ]
+  },
+  "source_urls": [
+    "https://www.cisco.com/c/en/us/products/collateral/switches/business-250-series-smart-switches/nb-06-bus250-smart-switch-ds-cte-en.html",
+    "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/Administration-Guide/cbs-250-ag.html",
+    "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli.html",
+    "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/Release-Notes/b_RN_cbs-250-350.html"
+  ]
+}
