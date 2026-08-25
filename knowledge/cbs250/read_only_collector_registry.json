@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "registry_id": "cbs250-read-only-collectors-v1",
+  "authority": {
+    "device_write_authority": false,
+    "execution_class": "R0_ONLY",
+    "authoritative_execution_allowlist": "cbs250_safety.READ_ONLY_EXEC_ALLOWLIST",
+    "discovered_commands_are_authority": false
+  },
+  "target_scope": {
+    "family": "CBS250",
+    "exact_live_reference_model": "CBS250-24T-4X",
+    "exact_live_reference_firmware": "3.3.0.16"
+  },
+  "commands": [
+    {
+      "command": "show system",
+      "collector_id": "device_system_identity",
+      "risk_class": "R0",
+      "automation_status": "approved",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "normalizes": [
+        "DeviceFingerprint.product_id",
+        "system_description",
+        "temperature_celsius",
+        "temperature_status"
+      ],
+      "planner_scope_complete": false
+    },
+    {
+      "command": "show version",
+      "collector_id": "device_firmware_identity",
+      "risk_class": "R0",
+      "automation_status": "approved",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "normalizes": [
+        "DeviceFingerprint.firmware_version"
+      ],
+      "planner_scope_complete": false
+    },
+    {
+      "command": "show ip ssh",
+      "collector_id": "ssh_management_state",
+      "risk_class": "R0",
+      "automation_status": "approved",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+      "normalizes": [
+        "ObservedState.capabilities.ssh_management",
+        "CurrentManagementState.services"
+      ],
+      "planner_scope_complete": false
+    }
+  ],
+  "blocked_expansion_rule": "No additional command may be automated until exact syntax, R0 semantics, exact-target evidence, safety tests, registry approval, and cbs250_safety allowlist approval all exist.",
+  "current_planner_scope_complete": false
+}
