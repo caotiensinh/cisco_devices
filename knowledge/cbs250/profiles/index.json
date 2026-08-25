@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "family": "CBS250",
+  "current_exact_live_reference": {
+    "product_id": "CBS250-24T-4X",
+    "firmware_version": "3.5.3.3",
+    "profile_path": "knowledge/cbs250/profiles/CBS250-24T-4X_3.5.3.3.json",
+    "evidence_path": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
+    "coverage_status": "TRUNCATED_AT_MAX_NODES"
+  },
+  "historical_profiles": [
+    {
+      "product_id": "CBS250-24T-4X",
+      "firmware_version": "3.3.0.16",
+      "profile_path": "knowledge/cbs250/profiles/CBS250-24T-4X_3.3.0.16.json",
+      "evidence_path": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json"
+    }
+  ],
+  "selection_rule": "Runtime/live planning must select an exact product_id + firmware_version profile. Historical profiles must never be substituted for a different observed firmware. Unknown exact firmware fails closed.",
+  "device_write_authority": false
+}
