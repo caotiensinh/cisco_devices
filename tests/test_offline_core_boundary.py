@@ -7,6 +7,8 @@ OFFLINE_CORE = [
     ROOT / "cisco_assistant" / "ipam.py",
     ROOT / "cisco_assistant" / "validation.py",
     ROOT / "cisco_assistant" / "profiles.py",
+    ROOT / "cisco_assistant" / "templates.py",
+    ROOT / "cisco_assistant" / "preview.py",
 ]
 FORBIDDEN_IMPORT_ROOTS = {
     "paramiko",
@@ -33,7 +35,7 @@ def imported_roots(path: Path) -> set[str]:
     return roots
 
 
-def test_normalized_models_ipam_validation_and_profiles_are_offline_only():
+def test_normalized_offline_core_has_no_device_execution_imports():
     violations = {}
     for path in OFFLINE_CORE:
         bad = imported_roots(path) & FORBIDDEN_IMPORT_ROOTS
@@ -63,3 +65,21 @@ def test_offline_core_has_no_raw_cli_execution_api_names():
         if bad:
             violations[str(path.relative_to(ROOT))] = sorted(bad)
     assert not violations, f"Offline core exposed CLI/device execution APIs: {violations}"
+
+
+def test_template_and_preview_source_do_not_embed_cisco_write_cli():
+    dangerous_fragments = {
+        "configure terminal",
+        "copy running-config startup-config",
+        "write memory",
+        "reload",
+        "clear logging",
+        "delete flash:",
+    }
+    violations = {}
+    for relative in ("cisco_assistant/templates.py", "cisco_assistant/preview.py"):
+        text = (ROOT / relative).read_text(encoding="utf-8").lower()
+        found = sorted(fragment for fragment in dangerous_fragments if fragment in text)
+        if found:
+            violations[relative] = found
+    assert not violations, f"Offline template/preview embedded device write CLI: {violations}"
