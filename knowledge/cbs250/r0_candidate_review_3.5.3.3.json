@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "review_id": "cbs250-r0-candidates-3.5.3.3-20260825",
+  "target": {
+    "product_id": "CBS250-24T-4X",
+    "firmware": "3.5.3.3"
+  },
+  "source_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
+  "authority": {
+    "device_write_authority": false,
+    "candidate_review_grants_execution_authority": false,
+    "promotion_requires_live_execution_output": true,
+    "promotion_requires_parser_tests": true,
+    "promotion_requires_exact_allowlist_update": true
+  },
+  "candidates": [
+    {
+      "command": "show vlan",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "VLAN inventory and membership foundation",
+      "evidence_sensitivity": "LOW",
+      "reason": "Exact live help exposes display-only VLAN variants and a terminal <CR>. No write semantics are exposed by this command form. Output has not yet been captured and parsed by the collector."
+    },
+    {
+      "command": "show interfaces status",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Physical interface presence/link/status inventory",
+      "evidence_sensitivity": "LOW",
+      "reason": "Exact live help identifies status display variants and a terminal <CR>. Output parser and real output evidence are still required before automation approval."
+    },
+    {
+      "command": "show interfaces switchport",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Access/trunk and VLAN membership normalization",
+      "evidence_sensitivity": "INTERNAL_NETWORK",
+      "reason": "Exact live help exposes interface selectors and terminal <CR> under show. Output parser and live output validation are still missing."
+    },
+    {
+      "command": "show spanning-tree",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "STP topology and protection-state inventory",
+      "evidence_sensitivity": "INTERNAL_NETWORK",
+      "reason": "Exact live help describes display-only STP views and terminal <CR>. It is not yet part of planner-minimum current state and remains non-executable until output/parser validation."
+    },
+    {
+      "command": "show management access-class",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Current management ACL binding",
+      "evidence_sensitivity": "INTERNAL_NETWORK",
+      "reason": "Exact live help provides terminal <CR>. Output may reveal trusted management topology, so exported evidence requires minimization/redaction policy."
+    },
+    {
+      "command": "show management access-list",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Management access-list definition inventory",
+      "evidence_sensitivity": "INTERNAL_NETWORK",
+      "reason": "Exact live help supports optional named access list or terminal <CR>. Output may contain management source networks and must be treated as internal topology data."
+    },
+    {
+      "command": "show logging",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Operational RAM log observation",
+      "evidence_sensitivity": "HIGH_OPERATIONAL",
+      "reason": "Exact live help exposes display-only logging and terminal <CR>. Logs may contain usernames, addresses, peer identities, and events; raw output must not be committed by default."
+    },
+    {
+      "command": "show logging file",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
+      "expected_use": "Persistent logging-file observation",
+      "evidence_sensitivity": "HIGH_OPERATIONAL",
+      "reason": "Exact live help exposes terminal <CR>. Persistent logs are potentially sensitive evidence and require local-only/raw-redaction handling."
+    },
+    {
+      "command": "show running-config brief",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": true,
+      "review_status": "HOLD_SENSITIVE_OUTPUT_REVIEW",
+      "expected_use": "Configuration snapshot for future current-state normalization",
+      "evidence_sensitivity": "VERY_HIGH_CONFIGURATION",
+      "reason": "Live help states brief excludes binary SSL/SSH key data, but this does not prove that all credentials, hashes, communities, addresses, or other sensitive configuration are absent. Do not automate or export until explicit redaction tests exist."
+    },
+    {
+      "command": "show lacp",
+      "risk_class": "R0",
+      "help_terminal_cr_observed": false,
+      "review_status": "HOLD_REQUIRES_SELECTOR",
+      "expected_use": "LAG state",
+      "evidence_sensitivity": "LOW",
+      "reason": "The exact live help for bare show lacp did not expose terminal <CR>; it requires a port-channel or interface selector. A deterministic selector strategy must be derived from observed interfaces before automation."
+    }
+  ],
+  "promotion_rule": "Only entries with controlled live output, stable parser fixtures, secret-hygiene review, and exact-target regression tests may be copied into read_only_collector_registry.json and cbs250_safety.READ_ONLY_EXEC_ALLOWLIST."
+}
