@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "evidence_id": "cbs250-24t-4x_3.5.3.3_20260825_v31",
+  "target": {
+    "vendor": "Cisco",
+    "family": "CBS250",
+    "product_id": "CBS250-24T-4X",
+    "active_firmware": "3.5.3.3",
+    "inactive_firmware": "3.3.0.16"
+  },
+  "source_run": {
+    "tool_version": "3.1.0",
+    "generated_at_utc": "2026-08-25T11:05:48.544052+00:00",
+    "tool_reported_status": "COMPLETE",
+    "normalized_coverage_status": "TRUNCATED_AT_MAX_NODES",
+    "normalization_reason": "The v3.1.0 full-safe run used max_nodes=12000. nodes_found=12006, and crawler code stops recursion/root insertion when nodes >= max_nodes while run() still emitted status COMPLETE. Therefore the run completed operationally but grammar coverage is not complete.",
+    "nodes_found": 12006,
+    "help_queries": 4698,
+    "pager_events": 4,
+    "shard_queries": 148,
+    "transport_recycles": 39,
+    "runtime_errors": 0
+  },
+  "safety_evidence": {
+    "mode": "INVESTIGATION_ONLY",
+    "discovered_commands_executed": false,
+    "help_query_submitted_with_enter": false,
+    "bytes_sent_after_help_marker_per_query": 0,
+    "disposable_channel_per_help_query": true,
+    "pager_navigation_after_help_query": false,
+    "ctrl_c_after_help_query": false,
+    "enter_after_help_query": false,
+    "persistent_configuration_changes_observed": false,
+    "known_v21_side_effect_signatures_observed": false,
+    "ephemeral_global_config_mode_entry_used": true,
+    "configuration_submodes_entered": false
+  },
+  "coverage": {
+    "privileged_exec_top_level_count": 39,
+    "privileged_exec_top_level_commands": [
+      "boot",
+      "cbd",
+      "cd",
+      "clear",
+      "clock",
+      "configure",
+      "copy",
+      "crypto",
+      "debug-mode",
+      "delete",
+      "dir",
+      "disable",
+      "do",
+      "dot1x",
+      "errdisable",
+      "exit",
+      "green-ethernet",
+      "help",
+      "login",
+      "macro",
+      "mkdir",
+      "more",
+      "no",
+      "ping",
+      "pwd",
+      "reload",
+      "rename",
+      "renew",
+      "resume",
+      "rmdir",
+      "set",
+      "show",
+      "ssh",
+      "system",
+      "telnet",
+      "terminal",
+      "test",
+      "traceroute",
+      "write"
+    ],
+    "privileged_exec_root_status": "COMPLETE_39_OF_39",
+    "global_config_top_level_count_observed_before_limit": 35,
+    "global_config_root_status": "PARTIAL_DUE_TO_MAX_NODES",
+    "dynamic_placeholder_values_instantiated": false,
+    "configuration_submodes_entered": false
+  },
+  "live_observed_read_only_grammar": {
+    "show_vlan": {
+      "syntax": "show vlan",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_interfaces_status": {
+      "syntax": "show interfaces status",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_interfaces_switchport": {
+      "syntax": "show interfaces switchport",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_spanning_tree": {
+      "syntax": "show spanning-tree",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_management_access_class": {
+      "syntax": "show management access-class",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_management_access_list": {
+      "syntax": "show management access-list",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_logging": {
+      "syntax": "show logging",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_logging_file": {
+      "syntax": "show logging file",
+      "terminal_cr_observed": true,
+      "automation_status": "candidate_only"
+    },
+    "show_running_config_brief": {
+      "syntax": "show running-config brief",
+      "terminal_cr_observed": true,
+      "automation_status": "hold_sensitive_output_review"
+    },
+    "show_lacp": {
+      "syntax": "show lacp",
+      "terminal_cr_observed": false,
+      "automation_status": "hold_requires_argument"
+    }
+  },
+  "provenance": {
+    "capability_summary_sha256": "5674ee4102ed5c80f24afc27df0a4a938ce531b6e6e50741ad933eeaeae527b0",
+    "raw_transcript_sha256": "a5620e64312b767225e8a9e22a64c48d4354309ff01575558677c436dbe127d2",
+    "partial_transcript_sha256": "2bbf8f88e208815d8958dbe4786494f3d48be6806e623f01f13e8746ca5060f2",
+    "raw_transcript_lines": 81833,
+    "partial_transcript_lines": 80467,
+    "raw_sources_committed": false,
+    "privacy_note": "Operational host address, username, MAC address, SSH fingerprint, and active-session peer address are intentionally omitted from this normalized repository record."
+  },
+  "authority": {
+    "device_write_authority": false,
+    "production_network_write_authority": false,
+    "discovered_grammar_is_execution_authority": false,
+    "candidate_commands_require_controlled_live_execution_output_and_parser_tests_before_allowlist_promotion": true
+  }
+}
