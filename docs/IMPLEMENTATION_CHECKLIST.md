@@ -47,28 +47,32 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Read-only execution exact allowlist.
 - [x] Progress/checkpoint support.
 - [x] Duplicate `do` recursion suppression.
-- [ ] Complete v3.1 live run.
-- [ ] Confirm complete privileged EXEC root coverage against known 39-command baseline.
-- [ ] Analyze every v3.1 error/warning.
-- [ ] Normalize v3.1 dataset into `knowledge/cbs250/live/`.
-- [ ] Build documented-vs-observed capability diff.
+- [x] Complete v3.1.0 operational live run; normalize deep-grammar coverage as `TRUNCATED_AT_MAX_NODES` rather than overclaiming full coverage.
+- [x] Confirm complete privileged EXEC root coverage against known 39-command baseline: 39/39.
+- [x] Analyze v3.1 runtime errors/coverage warnings: zero runtime errors; 12,000-node ceiling reached and identified as truncation.
+- [x] Normalize v3.1 dataset into `knowledge/cbs250/live/` bound to exact active firmware 3.5.3.3.
+- [x] Add v3.1.1 truthful coverage status wrapper so node-limit/error runs fail closed instead of reporting unconditional `COMPLETE`.
+- [ ] Build complete documented-vs-observed capability diff.
 - [x] Add exact firmware-bound capability registry/profile with conservative capability states.
-- [ ] Add coverage metrics: observed/documented/unknown/blocked.
+- [x] Add current-vs-historical exact-profile index; exact firmware mismatch must fail closed.
+- [ ] Add full coverage metrics: observed/documented/unknown/blocked.
+- [ ] Rerun v3.1.1 with a larger node ceiling if deeper/global-config grammar completeness is required.
 
 ### P1.3 Read-only collector syntax
 
 - [ ] Discover/confirm exact syntax for the complete current configuration/state collector set.
-- [ ] Running configuration collector reviewed.
+- [ ] Running configuration collector reviewed for automation; `show running-config brief` remains `HOLD_SENSITIVE_OUTPUT_REVIEW`.
 - [ ] Startup configuration collector reviewed.
-- [ ] Interface/status collector reviewed.
-- [ ] VLAN state collector reviewed.
-- [ ] STP state collector reviewed.
-- [ ] LAG/LACP state collector reviewed.
-- [ ] IP/L3 interface collector reviewed.
-- [ ] Route state collector reviewed.
+- [ ] Interface/status collector promoted; exact 3.5.3.3 syntax is candidate-reviewed but still requires controlled live output + parser tests.
+- [ ] VLAN state collector promoted; exact `show vlan` syntax is candidate-reviewed but still requires controlled live output + parser tests.
+- [ ] STP state collector promoted; exact `show spanning-tree` syntax is candidate-reviewed but still requires controlled live output + parser tests.
+- [ ] LAG/LACP state collector reviewed; bare `show lacp` remains `HOLD_REQUIRES_SELECTOR`.
+- [ ] IP/L3 interface collector reviewed; no exact live syntax proven yet.
+- [ ] Route state collector reviewed; no exact live syntax proven yet.
 - [x] Initial management-plane inventory subset reviewed: `show system`, `show version`, `show ip ssh`.
-- [ ] Full management-plane state collector reviewed.
-- [ ] Logging state collector reviewed.
+- [x] Create exact-firmware R0 candidate review that grants no execution authority.
+- [ ] Full management-plane state collector promoted; management ACL syntax is candidate-reviewed only.
+- [ ] Logging state collector promoted; `show logging` / `show logging file` are candidate-reviewed but require sensitive-output handling.
 - [ ] SNMP state collector reviewed.
 - [ ] Time/NTP/SNTP state collector reviewed.
 
