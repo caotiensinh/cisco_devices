@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "profile_id": "cbs250-24t-4x_3.3.0.16",
+  "scope": {
+    "vendor": "Cisco",
+    "family": "CBS250",
+    "product_id": "CBS250-24T-4X",
+    "firmware_version": "3.3.0.16"
+  },
+  "binding_status": "LIVE_BOUND_WITH_FAMILY_DOCUMENTED_LIMITS",
+  "authority_note": "Exact model and firmware are live-observed. Hardware identity is exact-model bound. Resource ceilings are Cisco CBS250 family documentation and are not re-observed from live CLI in the v3 dataset. Feature states remain conservative until live syntax/state is proven.",
+  "hardware": {
+    "gigabit_access_ports": 24,
+    "ten_gigabit_uplink_ports": 4,
+    "total_physical_ports": 28,
+    "source_scope": "exact_model"
+  },
+  "limits": {
+    "vlan_id_min": 1,
+    "vlan_id_max": 4094,
+    "active_vlans": 255,
+    "ip_interfaces": 16,
+    "ipv4_static_routes": 32,
+    "lag_groups": 4,
+    "active_ports_per_lag": 8,
+    "acl_rules": 512,
+    "hardware_qos_queues": 8,
+    "source_scope": "cbs250_family_documented"
+  },
+  "features": {
+    "ssh_management": "documented_and_observed",
+    "vlan_8021q": "documented_not_observed",
+    "ipv4_static_routing": "documented_not_observed",
+    "management_acl": "documented_not_observed",
+    "https_management": "documented_not_observed",
+    "remote_syslog": "documented_not_observed",
+    "snmpv3": "documented_not_observed",
+    "lacp": "documented_not_observed",
+    "ipv4_acl": "documented_not_observed"
+  },
+  "sources": {
+    "family_baseline": "knowledge/cbs250/platform_baseline.json",
+    "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json",
+    "platform_notes": "docs/CBS250/platform_and_limits.md"
+  }
+}
