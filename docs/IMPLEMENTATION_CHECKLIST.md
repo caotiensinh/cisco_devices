@@ -221,14 +221,16 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P4.2 Security profiles
 
-- [ ] Versioned security-profile schema.
-- [ ] LAB profile.
-- [ ] BASIC profile.
-- [ ] BUSINESS_STANDARD profile.
-- [ ] STRICT profile.
-- [ ] Each rule has explanation/severity/capability/risk.
-- [ ] Exact capability validation for expanded security rules.
-- [ ] Unsupported rule blocks or clearly degrades according to policy.
+- [x] Versioned security-profile schema (`schema_version=1`, built-ins `1.0.0`).
+- [x] LAB profile.
+- [x] BASIC profile.
+- [x] BUSINESS_STANDARD profile.
+- [x] STRICT profile.
+- [x] Each rule has intent/requirement/explanation/severity/capability/risk/applicability metadata.
+- [x] Exact device-profile capability validation for expanded security rules.
+- [x] Unsupported/unknown/unproven controls block or degrade explicitly according to offline-vs-live-proof policy.
+- [x] Policy-only unmapped controls cannot silently become CLI and block required future live-proof execution.
+- [x] Security expansion is included in the exact-device-aware offline design preview.
 
 ### P4.3 Planner
 
@@ -247,15 +249,16 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [ ] Current state view.
 - [x] Desired-state design preview (pre-diff foundation only).
 - [ ] Add/change/remove distinction.
-- [ ] Risk summary.
-- [ ] Capability warnings in final dry-run view.
+- [x] Security rule risk/capability state visible in offline preview.
+- [ ] Consolidated plan risk summary.
+- [x] Capability warnings visible in exact-device-aware offline preview.
 - [ ] Management-impact summary.
 - [ ] Export plan.
 
 ### P4 exit criteria
 
 - [x] Implemented templates compile to normalized intent, never raw CLI.
-- [ ] Security profiles compile to normalized rules, never raw CLI.
+- [x] Built-in security profiles compile to normalized rules, never raw CLI.
 - [ ] Dry-run plan can be fully generated with write authority still FALSE.
 
 ---
