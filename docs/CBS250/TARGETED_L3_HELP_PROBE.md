@@ -132,9 +132,44 @@ The probe could not complete because exact target binding, transport, authentica
 
 Again, this does not prove the candidate command is unsupported.
 
+## Sanitized evidence handoff
+
+Only after the probe returns `PASS_COMPLETE`, convert the local summary into a sanitized evidence record:
+
+```powershell
+python .\cbs250_targeted_help_evidence_ingest.py `
+  --input-summary "C:\path\to\CBS250_Targeted_L3_Help_<timestamp>\targeted_l3_help_summary.json" `
+  --output "C:\path\to\targeted_l3_help.sanitized.json"
+```
+
+The ingester is offline-only. It validates:
+
+- schema and `PASS_COMPLETE` status;
+- exact `CBS250-24T-4X / 3.5.3.3` binding;
+- false device/write/candidate-execution authority flags;
+- zero bytes after each `?`;
+- disposable channel close evidence;
+- no pagination;
+- terminal `<CR>` for all three prefixes;
+- exact expected prefix set.
+
+The sanitized record retains only:
+
+- exact product and firmware;
+- targeted help prefixes;
+- observed help tokens;
+- canonical SHA-256 of the source summary;
+- tool version;
+- `OBSERVED_HELP_ONLY` evidence status;
+- explicit false execution/write/collector-approval authority.
+
+It does not copy the probe's host address, username, SSH fingerprint, raw transcript, credentials, or connection metadata into the sanitized record.
+
+The raw `targeted_l3_help_transcript.txt` remains local/private by default. Do not commit it merely because the sanitized evidence passed.
+
 ## What a successful targeted-help run changes
 
-A `PASS_COMPLETE` run may change the planner-critical capability record from:
+A `PASS_COMPLETE` run plus successful sanitized-evidence ingestion may change the planner-critical capability record from:
 
 ```text
 DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET
