@@ -24,7 +24,7 @@ from cbs250_safety import READ_ONLY_EXEC_ALLOWLIST
 from cisco_assistant.read_only_collectors import parse_show_system, parse_show_version
 
 
-TOOL_VERSION = "1.0.0"
+TOOL_VERSION = "1.0.1"
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
 APPROVED_BINDING_COMMANDS = frozenset({"show system", "show version"})
@@ -130,7 +130,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Exact-bound CBS250 3.5.3.3 L3 context-help probe; candidate commands are never executed"
     )
-    parser.add_argument("--host", required=True)
+    parser.add_argument("--host")
     parser.add_argument("--username", default="admin")
     parser.add_argument("--port", type=int, default=22)
     parser.add_argument("--password-env", default="CBS_PASSWORD")
@@ -159,6 +159,9 @@ def main() -> int:
     args = parse_args()
     if args.policy_check:
         return policy_check()
+    if not args.host:
+        print("[BLOCKED] --host is required unless --policy-check is used")
+        return 2
 
     validate_static_policy()
     password = os.getenv(args.password_env)
