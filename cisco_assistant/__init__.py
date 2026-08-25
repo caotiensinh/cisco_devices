@@ -1,7 +1,7 @@
 """Core deterministic models and planning helpers for Cisco Network Configuration Assistant.
 
 This package is intentionally device-write-free. It contains only normalized data models,
-network arithmetic, offline capability profiles/templates/previews, and validation primitives.
+network arithmetic, offline capability/security profiles, templates/previews, and validation.
 """
 
 from .ipam import (
@@ -47,6 +47,19 @@ from .profiles import (
     load_device_profile,
     validate_intent_against_profile,
 )
+from .security_profiles import (
+    SECURITY_PROFILE_SCHEMA_VERSION,
+    ExpandedSecurityRule,
+    RuleRequirement,
+    RuleSeverity,
+    SecurityExpansionResult,
+    SecurityProfileDefinition,
+    SecurityProfileError,
+    SecurityRuleDefinition,
+    expand_security_profile,
+    get_security_profile,
+    list_security_profiles,
+)
 from .templates import (
     TEMPLATE_SCHEMA_VERSION,
     RolePortCount,
@@ -73,6 +86,7 @@ __all__ = [
     "DeviceCapability",
     "DeviceFingerprint",
     "DeviceProfile",
+    "ExpandedSecurityRule",
     "GatewayStrategy",
     "HardwareCapacity",
     "IPv4SubnetFacts",
@@ -87,8 +101,15 @@ __all__ = [
     "ResourceLimits",
     "RolePortCount",
     "RoutingIntent",
+    "RuleRequirement",
+    "RuleSeverity",
+    "SECURITY_PROFILE_SCHEMA_VERSION",
+    "SecurityExpansionResult",
     "SecurityIntent",
     "SecurityProfile",
+    "SecurityProfileDefinition",
+    "SecurityProfileError",
+    "SecurityRuleDefinition",
     "SegmentationAction",
     "SegmentationIntent",
     "SegmentationRule",
@@ -108,10 +129,13 @@ __all__ = [
     "ValidationSeverity",
     "build_design_preview",
     "build_template",
+    "expand_security_profile",
     "generate_sequential_networks",
     "generate_vlan_series",
     "generate_vlan_series_for_profile",
+    "get_security_profile",
     "get_template_definition",
+    "list_security_profiles",
     "list_templates",
     "load_cbs250_24t_4x_3_3_0_16_profile",
     "load_device_profile",
