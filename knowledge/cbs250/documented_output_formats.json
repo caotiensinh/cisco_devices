@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "record_id": "cbs250-documented-output-formats-v1",
+  "authority": {
+    "device_write_authority": false,
+    "execution_authority": false,
+    "parser_promotion_authority": false,
+    "documented_examples_are_live_evidence": false
+  },
+  "source_scope": {
+    "vendor": "Cisco",
+    "family": "CBS250",
+    "official_cli_guide_updated": "2025-02-28",
+    "exact_live_reference_product": "CBS250-24T-4X",
+    "exact_live_reference_firmware": "3.5.3.3",
+    "exact_live_output_validation_status": "PENDING"
+  },
+  "parsers": [
+    {
+      "command": "show vlan",
+      "implementation": "cisco_assistant.documented_output_parsers.parse_documented_show_vlan",
+      "documented_format_status": "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS",
+      "exact_live_3_5_3_3_status": "PENDING_CAPTURE_AND_REGRESSION",
+      "documented_fields": [
+        "Vlan",
+        "Name",
+        "Ports",
+        "Type",
+        "Authorization"
+      ],
+      "official_source": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/user-interface-commands.html",
+      "note": "Cisco documents a show vlan table example. The repository parser remains documented-format-only until exact 3.5.3.3 output is captured and independently reviewed."
+    },
+    {
+      "command": "show interfaces status",
+      "implementation": "cisco_assistant.documented_output_parsers.parse_documented_show_interfaces_status",
+      "documented_format_status": "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS",
+      "exact_live_3_5_3_3_status": "PENDING_CAPTURE_AND_REGRESSION",
+      "documented_fields": [
+        "Port",
+        "Type",
+        "Duplex",
+        "Speed",
+        "Neg",
+        "Flow control",
+        "Link State",
+        "Back Pressure",
+        "Mdix Mode"
+      ],
+      "official_source": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli.pdf",
+      "note": "The foundation parser handles physical-interface rows only. Port-channel rows remain a separate pending parser contract because their documented table shape differs."
+    },
+    {
+      "command": "show interfaces switchport",
+      "implementation": "cisco_assistant.documented_output_parsers.parse_documented_show_interfaces_switchport",
+      "documented_format_status": "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS",
+      "exact_live_3_5_3_3_status": "PENDING_CAPTURE_AND_REGRESSION",
+      "documented_fields": [
+        "Name",
+        "Switchport",
+        "Administrative Mode",
+        "Operational Mode",
+        "Access Mode VLAN",
+        "Trunking Native Mode VLAN",
+        "General PVID"
+      ],
+      "official_source": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli.pdf",
+      "note": "Unknown key/value fields are retained so firmware-specific additions are not silently discarded before exact-live review."
+    }
+  ],
+  "promotion_gate": [
+    "controlled exact-target live output",
+    "digest-only evidence ingestion",
+    "sensitivity review",
+    "exact-live parser fixture",
+    "negative and regression tests",
+    "collector registry approval",
+    "exact read-only allowlist approval"
+  ]
+}
