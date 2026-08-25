@@ -33,10 +33,11 @@ Before changing code or architecture, read:
 3. `docs/PRODUCT_SPEC.md`
 4. `docs/IMPLEMENTATION_CHECKLIST.md`
 5. `docs/governance/AI_AGENT_HARNESS.md`
-6. `governance/project_scope.json`
-7. `docs/CBS250/discovery_safety_v3.md`
-8. `docs/CBS250/automation_capability_model.md`
-9. relevant Cisco knowledge/evidence under `docs/CBS250/` and `knowledge/cbs250/`
+6. `docs/governance/WRITE_AUTHORITY_ACTIVATION.md`
+7. `governance/project_scope.json`
+8. `docs/CBS250/discovery_safety_v3.md`
+9. `docs/CBS250/automation_capability_model.md`
+10. relevant Cisco knowledge/evidence under `docs/CBS250/` and `knowledge/cbs250/`
 
 If these documents conflict, the stricter safety rule wins unless the HUMAN OWNER explicitly updates the governing documents.
 
@@ -205,3 +206,22 @@ It is done only when:
 The authoritative current phase and write authority are stored in `governance/project_scope.json`.
 
 Agents must not skip ahead from discovery/planning directly to production writes. Phase advancement requires explicit checklist evidence and an update to the governing scope file.
+
+## 12. Write-authority activation rule
+
+Changing a write-authority boolean is never sufficient authorization.
+
+Any future transition to `global_device_write_authority=true` or `production_network_write_authority=true` must comply with `docs/governance/WRITE_AUTHORITY_ACTIVATION.md` and the machine-readable activation policy in `governance/project_scope.json`.
+
+CI must require a dedicated `governance/write_authority_approval.json` marker in a `P6_...` phase with:
+
+- explicit HUMAN OWNER approval reference;
+- exact target model and firmware;
+- enumerated typed operation scope, never wildcard authority;
+- independent TEST_RELEASE PASS reference;
+- independent SECURITY_GATE PASS reference;
+- explicit production approval when production-network writes are requested.
+
+When both write-authority flags are false, the approval marker must not exist. A stale marker is latent authority and is prohibited.
+
+An approval marker cannot authorize destructive class `D` as a general capability, arbitrary raw CLI, newly discovered commands, another model/firmware, implicit deletion, firmware/image mutation, or factory reset.
