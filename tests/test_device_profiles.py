@@ -1,3 +1,5 @@
+import pytest
+
 from cisco_assistant import (
     DeviceFingerprint,
     ManagementIntent,
@@ -10,6 +12,8 @@ from cisco_assistant import (
     VLANIntent,
 )
 from cisco_assistant.profiles import (
+    ProfileError,
+    generate_vlan_series_for_profile,
     load_cbs250_24t_4x_3_3_0_16_profile,
     validate_intent_against_profile,
 )
@@ -39,6 +43,50 @@ def test_exact_profile_loads_expected_bound_resources():
     assert profile.limits.active_vlans == 255
     assert profile.limits.ip_interfaces == 16
     assert profile.limits.ipv4_static_routes == 32
+
+
+def test_profile_bound_vlan_generator_matches_product_example():
+    profile = load_cbs250_24t_4x_3_3_0_16_profile()
+    vlans = generate_vlan_series_for_profile(
+        profile,
+        start_vlan_id=100,
+        count=5,
+        vlan_increment=10,
+        start_network="10.50.0.0/24",
+        name_prefix="SITE",
+        purpose_prefix="office",
+    )
+    assert [(v.id, v.network, v.gateway) for v in vlans] == [
+        (100, "10.50.0.0/24", "10.50.0.1"),
+        (110, "10.50.1.0/24", "10.50.1.1"),
+        (120, "10.50.2.0/24", "10.50.2.1"),
+        (130, "10.50.3.0/24", "10.50.3.1"),
+        (140, "10.50.4.0/24", "10.50.4.1"),
+    ]
+
+
+def test_profile_bound_vlan_generator_blocks_active_vlan_overflow():
+    profile = load_cbs250_24t_4x_3_3_0_16_profile()
+    with pytest.raises(ProfileError, match="active VLAN limit 255"):
+        generate_vlan_series_for_profile(
+            profile,
+            start_vlan_id=1,
+            count=256,
+            vlan_increment=1,
+            start_network="10.0.0.0/24",
+        )
+
+
+def test_profile_bound_vlan_generator_blocks_vlan_id_range_overflow():
+    profile = load_cbs250_24t_4x_3_3_0_16_profile()
+    with pytest.raises(ProfileError, match="outside profile range"):
+        generate_vlan_series_for_profile(
+            profile,
+            start_vlan_id=4090,
+            count=2,
+            vlan_increment=10,
+            start_network="10.0.0.0/24",
+        )
 
 
 def test_profile_fingerprint_mismatch_is_blocked():
