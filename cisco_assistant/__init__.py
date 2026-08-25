@@ -96,6 +96,13 @@ from .security_profiles import (
     list_security_profiles,
 )
 from .state_view import CurrentStatePreview, build_current_state_preview
+from .template_migrations import (
+    TEMPLATE_MIGRATIONS,
+    TemplateDocument,
+    TemplateMigrationError,
+    TemplateMigrationResult,
+    migrate_template_document,
+)
 from .templates import (
     TEMPLATE_SCHEMA_VERSION,
     RolePortCount,
@@ -178,12 +185,16 @@ __all__ = [
     "SegmentationAction",
     "SegmentationIntent",
     "SegmentationRule",
+    "TEMPLATE_MIGRATIONS",
     "TEMPLATE_SCHEMA_VERSION",
     "TargetDevicePreview",
     "TemplateBuildResult",
     "TemplateDefinition",
+    "TemplateDocument",
     "TemplateError",
     "TemplateId",
+    "TemplateMigrationError",
+    "TemplateMigrationResult",
     "TemplateRequest",
     "TemplateRole",
     "UplinkIntent",
@@ -212,6 +223,7 @@ __all__ = [
     "list_templates",
     "load_cbs250_24t_4x_3_3_0_16_profile",
     "load_device_profile",
+    "migrate_template_document",
     "subnet_facts",
     "validate_intent_against_profile",
     "validate_network_intent",
