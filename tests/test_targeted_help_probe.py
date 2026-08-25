@@ -10,6 +10,7 @@ from cbs250_targeted_help_probe import (
     EXPECTED_PRODUCT_ID,
     L3_HELP_PREFIXES,
     TargetedProbeError,
+    classify_probe_results,
     probe_prefix,
     validate_probe_prefix,
     validate_static_policy,
@@ -53,6 +54,21 @@ class FakeHelpCrawler:
         return [
             SimpleNamespace(token="<CR>", description="", kind="terminal", risk="read_only")
         ], False
+
+
+def complete_result(prefix):
+    return {
+        "prefix": prefix,
+        "query": f"{prefix} ?",
+        "candidate_command_executed": False,
+        "help_query_submitted_with_enter": False,
+        "bytes_sent_after_help_marker": 0,
+        "channel_closed_immediately": True,
+        "paginated": False,
+        "terminal_cr_observed": True,
+        "items": [],
+        "error": None,
+    }
 
 
 def test_static_policy_keeps_binding_commands_inside_existing_allowlist():
@@ -109,6 +125,52 @@ def test_candidate_probe_uses_context_help_api_and_records_zero_bytes_after_mark
     assert result["channel_closed_immediately"] is True
     assert result["terminal_cr_observed"] is True
     assert result["error"] is None
+
+
+def test_classification_requires_safe_complete_three_prefix_evidence():
+    results = [complete_result(prefix) for prefix in L3_HELP_PREFIXES]
+    state = classify_probe_results(results)
+
+    assert state["status"] == "PASS_COMPLETE"
+    assert state["safety_status"] == "PASS"
+    assert state["evidence_status"] == "COMPLETE"
+    assert state["safety_pass"] is True
+    assert state["evidence_complete"] is True
+
+
+def test_safe_but_paginated_or_missing_cr_is_blocked_as_incomplete_evidence():
+    results = [complete_result(prefix) for prefix in L3_HELP_PREFIXES]
+    results[0]["paginated"] = True
+    state = classify_probe_results(results)
+    assert state["status"] == "BLOCKED_INCOMPLETE_EVIDENCE"
+    assert state["safety_status"] == "PASS"
+    assert state["evidence_status"] == "INCOMPLETE"
+
+    results = [complete_result(prefix) for prefix in L3_HELP_PREFIXES]
+    results[1]["terminal_cr_observed"] = False
+    state = classify_probe_results(results)
+    assert state["status"] == "BLOCKED_INCOMPLETE_EVIDENCE"
+    assert state["safety_status"] == "PASS"
+    assert state["evidence_status"] == "INCOMPLETE"
+
+
+def test_any_post_marker_or_channel_safety_failure_blocks_safety():
+    results = [complete_result(prefix) for prefix in L3_HELP_PREFIXES]
+    results[2]["bytes_sent_after_help_marker"] = 1
+    state = classify_probe_results(results)
+
+    assert state["status"] == "BLOCKED_SAFETY"
+    assert state["safety_status"] == "BLOCKED"
+    assert state["evidence_status"] == "INCOMPLETE"
+    assert state["safety_pass"] is False
+    assert state["evidence_complete"] is False
+
+
+def test_missing_result_is_not_misreported_as_complete():
+    results = [complete_result(prefix) for prefix in L3_HELP_PREFIXES[:-1]]
+    state = classify_probe_results(results)
+    assert state["status"] == "BLOCKED_SAFETY"
+    assert state["evidence_complete"] is False
 
 
 def test_source_does_not_use_full_crawler_or_candidate_execution_path():
