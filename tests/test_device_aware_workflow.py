@@ -72,6 +72,34 @@ def test_offline_mode_keeps_unproven_capabilities_visible_as_warnings_but_design
     assert result.as_dict()["capability_validation"]["mode"] == "offline_design"
 
 
+def test_security_profile_is_expanded_in_same_offline_design_result():
+    profile = load_cbs250_24t_4x_3_3_0_16_profile()
+    result = build_device_aware_design_preview(
+        small_office_request(),
+        profile,
+        require_live_proof=False,
+    )
+
+    payload = result.as_dict()["security_profile_expansion"]
+    assert payload["profile"] == "BUSINESS_STANDARD"
+    assert payload["version"] == "1.0.0"
+    assert payload["valid"] is True
+    assert any(
+        rule["rule_id"] == "management.ssh"
+        and rule["status"] == "proven"
+        for rule in payload["rules"]
+    )
+    assert any(
+        rule["rule_id"] == "management.https"
+        and rule["status"] == "documented_unproven"
+        for rule in payload["rules"]
+    )
+    text = result.render_text()
+    assert "SECURITY PROFILE" in text
+    assert "BUSINESS_STANDARD @ 1.0.0" in text
+    assert "management.ssh" in text
+
+
 def test_strict_future_live_proof_mode_blocks_until_required_capabilities_are_proven():
     profile = load_cbs250_24t_4x_3_3_0_16_profile()
     result = build_device_aware_design_preview(
@@ -86,6 +114,7 @@ def test_strict_future_live_proof_mode_blocks_until_required_capabilities_are_pr
         for issue in result.profile_validation.blocking
     )
     assert result.as_dict()["capability_validation"]["mode"] == "live_proof_required"
+    assert result.security_expansion.blocking
 
 
 def test_observed_firmware_mismatch_blocks_exact_profile_workflow():
