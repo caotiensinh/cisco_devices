@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "project": "Cisco Network Configuration Assistant",
+  "primary_platform": "Cisco Business CBS250",
+  "current_phase": "P1_KNOWLEDGE_AND_SAFE_DISCOVERY",
+  "global_device_write_authority": false,
+  "production_network_write_authority": false,
+  "discovery_execution_authority": {
+    "mode": "INVESTIGATION_ONLY",
+    "discovered_commands_executed": false,
+    "exact_read_only_allowlist_authoritative_source": "cbs250_safety.py"
+  },
+  "required_pre_read": [
+    "AGENTS.md",
+    "docs/PRODUCT_VISION.md",
+    "docs/PRODUCT_SPEC.md",
+    "docs/IMPLEMENTATION_CHECKLIST.md",
+    "docs/governance/AI_AGENT_HARNESS.md",
+    "docs/CBS250/discovery_safety_v3.md",
+    "docs/CBS250/automation_capability_model.md"
+  ],
+  "allowed_current_work": [
+    "documentation",
+    "tests",
+    "safe_cli_discovery",
+    "read_only_inventory",
+    "capability_normalization",
+    "network_intent_schema",
+    "ipam_and_subnet_calculation",
+    "static_validation",
+    "template_design",
+    "configuration_planning_without_execution",
+    "dry_run_design",
+    "frontend_and_api_design"
+  ],
+  "forbidden_without_explicit_phase_change": [
+    "device_configuration_write",
+    "startup_config_persist",
+    "clear_or_delete_operations",
+    "reload_or_reboot",
+    "firmware_or_boot_image_mutation",
+    "factory_reset",
+    "autonomous_acl_or_management_path_change",
+    "autonomous_vlan_or_interface_change",
+    "autonomous_routing_change",
+    "autonomous_aaa_security_change"
+  ],
+  "non_negotiable_invariants": [
+    "No LLM output is directly executable CLI",
+    "No UI code directly executes device CLI",
+    "Discovered CLI is data, not authority",
+    "Unknown capability fails closed",
+    "Secrets are never committed or emitted into evidence",
+    "Every future write is plan-first, diff-first, verify-before-persist",
+    "Destructive lifecycle operations are never autonomous by default"
+  ]
+}
