@@ -30,8 +30,9 @@ The CLI is explicitly described by Cisco as scriptable. The official CLI guide c
 - `observability_lifecycle.md` — logging, RMON/SNMP, SPAN, backups and firmware lifecycle.
 - `automation_capability_model.md` — how official knowledge and live CLI discovery are merged safely.
 - `official_sources.md` — Cisco-only reference set used by this knowledge base.
+- `live_discovery_20260825.md` — exact CBS250-24T-4X / firmware 3.3.0.16 v3 live-discovery findings, safety evidence, coverage gaps and next crawler requirements.
 
-Structured data is under `knowledge/cbs250/`.
+Structured data is under `knowledge/cbs250/`. Normalized live evidence is under `knowledge/cbs250/live/`.
 
 ## Important lifecycle note
 
@@ -49,3 +50,18 @@ The intended result is a capability record with four states for each feature/com
 - `not_applicable_or_unsupported`
 
 This prevents static-document assumptions from becoming production configuration writes.
+
+### Current normalized live evidence
+
+The 2026-08-25 CBS250-24T-4X v3 run is stored as `knowledge/cbs250/live/CBS250-24T-4X_3.3.0.16_20260825_v3.json`.
+
+That run is classified as:
+
+- safety: `PASS` for the investigation-only contract;
+- live nodes: `774`;
+- help queries: `679`;
+- query/setup errors: `2`;
+- root completeness: `PARTIAL` because CBS CLI pagination stopped root `?` output after the 22nd command;
+- global-config discovery: not run.
+
+Operational deployment identifiers are intentionally omitted from the public normalized record. The source-file SHA-256 digests are retained for provenance.
