@@ -2,7 +2,7 @@
 
 This package is intentionally device-write-free. It contains normalized data models,
 network arithmetic, offline current state, capability/security profiles, templates/previews,
-semantic diff planning/dry-run workflows, and validation.
+semantic diff planning/dry-run analysis/workflows, and validation.
 """
 
 from .current_state import (
@@ -39,6 +39,12 @@ from .models import (
     SegmentationRule,
     UplinkIntent,
     VLANIntent,
+)
+from .plan_analysis import (
+    ManagementImpactSummary,
+    PlanAnalysis,
+    RiskSummary,
+    analyze_change_plan,
 )
 from .planner import (
     PLAN_SCHEMA_VERSION,
@@ -127,12 +133,14 @@ __all__ = [
     "GatewayStrategy",
     "HardwareCapacity",
     "IPv4SubnetFacts",
+    "ManagementImpactSummary",
     "ManagementIntent",
     "NetworkIntent",
     "ObservedState",
     "OperationReadiness",
     "OperationType",
     "PLAN_SCHEMA_VERSION",
+    "PlanAnalysis",
     "PlannedOperation",
     "PortIntent",
     "PortMode",
@@ -140,6 +148,7 @@ __all__ = [
     "PreviewIssue",
     "ProfileError",
     "ResourceLimits",
+    "RiskSummary",
     "RolePortCount",
     "RollbackSpec",
     "RollbackStrategy",
@@ -172,6 +181,7 @@ __all__ = [
     "ValidationResult",
     "ValidationSeverity",
     "VerificationSpec",
+    "analyze_change_plan",
     "build_change_plan",
     "build_design_preview",
     "build_device_aware_design_preview",
