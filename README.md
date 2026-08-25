@@ -4,7 +4,7 @@ Tools and knowledge for discovering, understanding and automating Cisco device c
 
 ## CBS250 knowledge base
 
-The repository now contains a Cisco-official documentation baseline for Cisco Business 250 Series Smart Switches under:
+Cisco-official documentation baseline:
 
 ```text
 docs/CBS250/
@@ -14,6 +14,7 @@ docs/CBS250/
 ├── switching_routing_services.md
 ├── observability_lifecycle.md
 ├── automation_capability_model.md
+├── discovery_safety_v3.md
 └── official_sources.md
 
 knowledge/cbs250/
@@ -21,74 +22,80 @@ knowledge/cbs250/
 └── platform_baseline.json
 ```
 
-The knowledge model deliberately separates:
+The knowledge model separates Cisco-documented semantics/resource limits, firmware caveats, exact live CLI capability, and automation risk classification.
 
-- Cisco-documented feature semantics and resource limits;
-- exact firmware release caveats;
-- exact live CLI capability observed from the target switch;
-- automation safety/risk classification.
+## CBS250 CLI Capability Discovery v3
 
-Start with `docs/CBS250/README.md`.
+**Mode: `INVESTIGATION_ONLY`**
 
-## CBS250 CLI Capability Discovery v2.1
+v2.1 is retired for live discovery. Captured evidence showed that reuse of an interactive channel could leave partial CLI input behind and a later synchronization input could cross an execution boundary.
 
-`cbs250_cli_discovery.py` inventories the live CLI command tree exposed by Cisco CBS250/CBS350-style firmware over SSH.
+v3 removes that architecture.
 
-The design intentionally prefers **live capability discovery** over assuming every command in a static CLI manual is supported by the exact model, firmware, privilege level, and CLI mode in use.
-
-### Safety model
-
-The crawler does **not execute commands it discovers**.
-
-For context-sensitive discovery it types commands such as:
+For every context-help query:
 
 ```text
-show ?
-show logging ?
+OPEN brand-new SSH shell channel
+        ↓
+obtain clean prompt
+        ↓
+type: <prefix> ?
+        ↓
+NO Enter
+        ↓
+read help output
+        ↓
+CLOSE entire channel
 ```
 
-without submitting the partial command with Enter. After reading the help output it sends `Ctrl+C` to cancel the line.
+After literal `?`, v3 sends **zero additional bytes** on that channel. It sends no `Ctrl+C`, no Enter, no synchronization command, and no follow-up command.
 
-Automatically executed commands are limited to:
+### Absolute execution policy
+
+Discovered command text is data only and is never executed.
+
+The generic executor accepts exactly:
 
 ```text
-terminal datadump
 show version
 show system
-configure terminal
-configure
-end
+show ip ssh
 ```
 
-`configure terminal` / `configure` are used only to enter global configuration mode for help discovery. The crawler does not execute discovered configuration commands.
+State-changing/destructive roots are hard-denied, including:
 
-It does not automatically execute commands such as `reload`, `delete`, `clear`, `copy`, `write`, `set`, `no`, or `shutdown`.
+```text
+boot
+clear
+configure
+copy
+crypto
+delete
+reload
+set
+no
+shutdown
+write
+```
 
-### Legacy CBS250 SSH compatibility
+The deny list is implemented in `cbs250_safety.py` and covered by tests in `tests/test_safety.py`.
 
-Some CBS250/CBS350 firmware exposes an `ssh-rsa` server host key and may authenticate through either SSH password authentication or keyboard-interactive authentication.
-
-v2.1 therefore:
-
-- keeps `ssh-rsa` host-key support available for this connection;
-- does **not** enable `ssh-dss`;
-- tries password authentication once;
-- if needed, tries keyboard-interactive authentication once with the same password;
-- does not retry indefinitely;
-- distinguishes SSH negotiation failures from authentication failures.
-
-### Requirements
-
-- Python 3.9+
-- Paramiko 3.4+
-
-Install:
+### Install
 
 ```powershell
 python -m pip install -r .\requirements.txt
 ```
 
-### Run
+### Verify safety policy locally
+
+```powershell
+python .\cbs250_cli_discovery.py --policy-check
+python -m pytest -q
+```
+
+### Recommended first live run
+
+Global configuration help is disabled by default:
 
 ```powershell
 python .\cbs250_cli_discovery.py `
@@ -98,53 +105,37 @@ python .\cbs250_cli_discovery.py `
     --max-nodes 4000
 ```
 
-The password is requested with a hidden prompt and is not written to the output files.
+### Optional global configuration help
+
+Only for contextual `?` discovery. Each query still uses a new disposable channel; no configuration command is submitted.
+
+```powershell
+python .\cbs250_cli_discovery.py `
+    --host 192.168.11.6 `
+    --username admin `
+    --max-depth 7 `
+    --max-nodes 4000 `
+    --include-config-help
+```
 
 ### Output
 
-By default the crawler writes to:
-
 ```text
-C:\Users\<USER>\Downloads\CBS250_CLI_Discovery_YYYYMMDD_HHMMSS\
+C:\Users\<USER>\Downloads\CBS250_CLI_Discovery_v3_YYYYMMDD_HHMMSS\
+├── cbs250_command_tree_v3.json
+├── cbs250_capability_summary_v3.json
+└── cbs250_raw_transcript_v3.txt
 ```
 
-with:
+Each successful help query has an audit record proving:
 
-```text
-cbs250_command_tree.json
-cbs250_capability_summary.json
-cbs250_raw_transcript.txt
+```json
+{
+  "bytes_sent_after_help_marker": 0,
+  "channel_closed_immediately": true
+}
 ```
 
-### Discovery limits
+## Security boundary
 
-Default limits prevent uncontrolled recursion:
-
-- maximum depth: `5`
-- maximum nodes: `1500`
-
-Example with larger limits:
-
-```powershell
-python .\cbs250_cli_discovery.py `
-    --host 192.168.11.6 `
-    --username admin `
-    --max-depth 7 `
-    --max-nodes 4000
-```
-
-To discover privileged EXEC mode only:
-
-```powershell
-python .\cbs250_cli_discovery.py `
-    --host 192.168.11.6 `
-    --username admin `
-    --no-config-mode
-```
-
-## Security notes
-
-- Do not commit device passwords or private keys.
-- Prefer a dedicated read-only/least-privilege automation account where supported.
-- Treat capability discovery as separate from configuration execution.
-- Keep destructive and state-changing commands behind explicit policy and authorization gates.
+This repository currently grants the crawler **no configuration/write authority**. A future configuration engine, if created, must be a separate component with explicit authorization, prechecks, rollback and independent safety review.
