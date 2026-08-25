@@ -1,8 +1,8 @@
 """Core deterministic models and planning helpers for Cisco Network Configuration Assistant.
 
 This package is intentionally device-write-free. It contains normalized data models,
-network arithmetic, offline current state, capability/security profiles, templates/previews,
-semantic diff planning/dry-run analysis/workflows, and validation.
+network arithmetic, offline current state/views, capability/security profiles,
+templates/previews, semantic diff planning/dry-run analysis/workflows, and validation.
 """
 
 from .current_state import (
@@ -88,6 +88,7 @@ from .security_profiles import (
     get_security_profile,
     list_security_profiles,
 )
+from .state_view import CurrentStatePreview, build_current_state_preview
 from .templates import (
     TEMPLATE_SCHEMA_VERSION,
     RolePortCount,
@@ -121,6 +122,7 @@ __all__ = [
     "CurrentNetworkState",
     "CurrentStateBasis",
     "CurrentStateError",
+    "CurrentStatePreview",
     "CurrentTrunkState",
     "CurrentVLANState",
     "DesignPreview",
@@ -183,6 +185,7 @@ __all__ = [
     "VerificationSpec",
     "analyze_change_plan",
     "build_change_plan",
+    "build_current_state_preview",
     "build_design_preview",
     "build_device_aware_design_preview",
     "build_device_aware_dry_run",
