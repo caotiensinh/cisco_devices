@@ -37,8 +37,10 @@ class R0EvidenceRecord:
     command: str
     product_id: str
     firmware_version: str
-    output_sha256: str
-    output_bytes: int
+    raw_text_sha256: str
+    raw_text_bytes: int
+    canonical_text_sha256: str
+    canonical_text_bytes: int
     source_label: str
     candidate_review_status: str
     evidence_sensitivity: str
@@ -54,8 +56,10 @@ class R0EvidenceRecord:
             "command": self.command,
             "product_id": self.product_id,
             "firmware_version": self.firmware_version,
-            "output_sha256": self.output_sha256,
-            "output_bytes": self.output_bytes,
+            "raw_text_sha256": self.raw_text_sha256,
+            "raw_text_bytes": self.raw_text_bytes,
+            "canonical_text_sha256": self.canonical_text_sha256,
+            "canonical_text_bytes": self.canonical_text_bytes,
             "source_label": self.source_label,
             "candidate_review_status": self.candidate_review_status,
             "evidence_sensitivity": self.evidence_sensitivity,
@@ -151,6 +155,10 @@ def ingest_external_r0_output(
     The caller-supplied output is not independently proven live by this offline function.
     Therefore every record remains ``INGESTED_UNVERIFIED`` and cannot grant execution or
     allowlist authority. Commands on HOLD are rejected until their candidate review changes.
+
+    ``raw_text_sha256`` fingerprints the text exactly as supplied to this function after UTF-8
+    encoding. ``canonical_text_sha256`` normalizes CRLF/CR line endings to LF so independently
+    exported Windows/Unix text can also be compared without losing the exact supplied digest.
     """
     payload = _load_review_payload(review_path)
     target = payload.get("target", {})
@@ -172,18 +180,22 @@ def ingest_external_r0_output(
             f"status={candidate.review_status}"
         )
 
-    output = raw_output.replace("\r\n", "\n").replace("\r", "\n")
-    if not output.strip():
+    if not raw_output.strip():
         raise R0EvidenceError("raw_output must contain captured command output")
     label = _required_text(source_label, "source_label")
-    encoded = output.encode("utf-8")
+
+    raw_encoded = raw_output.encode("utf-8")
+    canonical_output = raw_output.replace("\r\n", "\n").replace("\r", "\n")
+    canonical_encoded = canonical_output.encode("utf-8")
 
     return R0EvidenceRecord(
         command=candidate.command,
         product_id=expected_product,
         firmware_version=expected_firmware,
-        output_sha256="sha256:" + hashlib.sha256(encoded).hexdigest(),
-        output_bytes=len(encoded),
+        raw_text_sha256="sha256:" + hashlib.sha256(raw_encoded).hexdigest(),
+        raw_text_bytes=len(raw_encoded),
+        canonical_text_sha256="sha256:" + hashlib.sha256(canonical_encoded).hexdigest(),
+        canonical_text_bytes=len(canonical_encoded),
         source_label=label,
         candidate_review_status=candidate.review_status,
         evidence_sensitivity=candidate.evidence_sensitivity,
