@@ -8,6 +8,7 @@ OFFLINE_CORE = [
     ROOT / "cisco_assistant" / "validation.py",
     ROOT / "cisco_assistant" / "profiles.py",
     ROOT / "cisco_assistant" / "templates.py",
+    ROOT / "cisco_assistant" / "template_migrations.py",
     ROOT / "cisco_assistant" / "preview.py",
     ROOT / "cisco_assistant" / "workflow.py",
     ROOT / "cisco_assistant" / "security_profiles.py",
@@ -87,6 +88,7 @@ def test_offline_design_policy_planner_analysis_dry_run_and_export_do_not_embed_
     violations = {}
     for relative in (
         "cisco_assistant/templates.py",
+        "cisco_assistant/template_migrations.py",
         "cisco_assistant/preview.py",
         "cisco_assistant/workflow.py",
         "cisco_assistant/security_profiles.py",
