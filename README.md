@@ -4,33 +4,22 @@ Tools and knowledge for discovering, understanding and automating Cisco device c
 
 ## CBS250 knowledge base
 
-Cisco-official documentation baseline:
+Cisco-official documentation and normalized live evidence live under:
 
 ```text
 docs/CBS250/
-├── README.md
-├── platform_and_limits.md
-├── secure_operations_baseline.md
-├── switching_routing_services.md
-├── observability_lifecycle.md
-├── automation_capability_model.md
-├── discovery_safety_v3.md
-└── official_sources.md
-
 knowledge/cbs250/
-├── observed_exec_root.json
-└── platform_baseline.json
 ```
 
 The knowledge model separates Cisco-documented semantics/resource limits, firmware caveats, exact live CLI capability, and automation risk classification.
 
-## CBS250 CLI Capability Discovery v3
+## CBS250 CLI Capability Discovery v3.1
 
 **Mode: `INVESTIGATION_ONLY`**
 
-v2.1 is retired for live discovery. Captured evidence showed that reuse of an interactive channel could leave partial CLI input behind and a later synchronization input could cross an execution boundary.
+v2.1 is retired for live discovery. v3 introduced disposable SSH channels. v3.1 keeps that safety model and fixes the CBS250 help-pagination gap found in live evidence.
 
-v3 removes that architecture.
+### Core invariant
 
 For every context-help query:
 
@@ -39,16 +28,52 @@ OPEN brand-new SSH shell channel
         ↓
 obtain clean prompt
         ↓
-type: <prefix> ?
+type help query ending in ?
         ↓
-NO Enter
+NO Enter / NO Ctrl+C / NO pager key
         ↓
 read help output
         ↓
 CLOSE entire channel
 ```
 
-After literal `?`, v3 sends **zero additional bytes** on that channel. It sends no `Ctrl+C`, no Enter, no synchronization command, and no follow-up command.
+After literal `?`, v3.1 sends **zero additional bytes** on that channel.
+
+### Safe pagination recovery
+
+CBS250 context help can stop at:
+
+```text
+More: <space>, Quit: q or CTRL+Z, One line: <return>
+```
+
+v3.1 never presses Space or Enter after `?`. Instead it opens new disposable channels and uses Cisco partial-keyword help:
+
+```text
+?
+  → pager detected
+
+a?
+b?
+c?
+...
+s?
+...
+
+show ?
+  → pager detected
+
+show a?
+show b?
+show c?
+...
+```
+
+If an individual shard still paginates, the crawler refines that shard again up to `--max-shard-depth`.
+
+### Duplicate wrapper suppression
+
+`do` mirrors the EXEC command tree and produced a large duplicate subtree in v3. v3.1 records the `do` capability but does not recurse through it.
 
 ### Absolute execution policy
 
@@ -62,7 +87,7 @@ show system
 show ip ssh
 ```
 
-State-changing/destructive roots are hard-denied, including:
+State-changing/destructive execution roots are hard-denied, including:
 
 ```text
 boot
@@ -78,59 +103,60 @@ shutdown
 write
 ```
 
-The deny list is implemented in `cbs250_safety.py` and covered by tests in `tests/test_safety.py`.
-
-### Install
+### Install and safety test
 
 ```powershell
 python -m pip install -r .\requirements.txt
-```
-
-### Verify safety policy locally
-
-```powershell
 python .\cbs250_cli_discovery.py --policy-check
 python -m pytest -q
 ```
 
-### Recommended first live run
-
-Global configuration help is disabled by default:
+### One-run maximum safe discovery
 
 ```powershell
 python .\cbs250_cli_discovery.py `
     --host 192.168.11.6 `
     --username admin `
-    --max-depth 7 `
-    --max-nodes 4000
+    --full-safe
 ```
 
-### Optional global configuration help
+`--full-safe` performs, in one program invocation:
 
-Only for contextual `?` discovery. Each query still uses a new disposable channel; no configuration command is submitted.
+- privileged EXEC context-help discovery;
+- automatic safe pagination sharding;
+- global-configuration context-help discovery using ephemeral mode entry only;
+- progress output;
+- periodic checkpoints;
+- SSH transport recycling/backoff to reduce channel exhaustion.
+
+It intentionally does **not** instantiate dynamic placeholders such as arbitrary VLAN IDs, IP addresses, filenames or interface values, and it does not enter potentially state-changing configuration submodes. Therefore `full-safe` means the maximum grammar that can be investigated without granting configuration/write authority.
+
+### Faster EXEC-only run
 
 ```powershell
 python .\cbs250_cli_discovery.py `
     --host 192.168.11.6 `
     --username admin `
     --max-depth 7 `
-    --max-nodes 4000 `
-    --include-config-help
+    --max-nodes 8000
 ```
 
 ### Output
 
 ```text
-C:\Users\<USER>\Downloads\CBS250_CLI_Discovery_v3_YYYYMMDD_HHMMSS\
-├── cbs250_command_tree_v3.json
-├── cbs250_capability_summary_v3.json
-└── cbs250_raw_transcript_v3.txt
+C:\Users\<USER>\Downloads\CBS250_CLI_Discovery_v31_YYYYMMDD_HHMMSS\
+├── cbs250_command_tree_v31.json
+├── cbs250_capability_summary_v31.json
+├── cbs250_raw_transcript_v31.txt
+├── cbs250_checkpoint_v31.json                  # while running
+└── cbs250_raw_transcript_v31.partial.txt       # while running
 ```
 
-Each successful help query has an audit record proving:
+Each help-query audit record includes:
 
 ```json
 {
+  "query": "show s?",
   "bytes_sent_after_help_marker": 0,
   "channel_closed_immediately": true
 }
@@ -138,4 +164,4 @@ Each successful help query has an audit record proving:
 
 ## Security boundary
 
-This repository currently grants the crawler **no configuration/write authority**. A future configuration engine, if created, must be a separate component with explicit authorization, prechecks, rollback and independent safety review.
+This repository grants the crawler **no configuration/write authority**. A future configuration engine must remain a separate component with explicit authorization, prechecks, rollback and independent safety review.
