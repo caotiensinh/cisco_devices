@@ -69,5 +69,5 @@ def test_agents_contract_points_to_scope_and_spec():
     text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert "governance/project_scope.json" in text
     assert "docs/PRODUCT_SPEC.md" in text
-    assert "No LLM output may directly become an executable device command stream." in text
+    assert "No LLM response may directly become an executable device command stream." in text
     assert "Device configuration/write authority is FALSE by default." in text
