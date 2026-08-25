@@ -9,6 +9,8 @@ from cisco_assistant.read_only_collectors import (
 from cisco_assistant.read_only_transport import (
     ParamikoCBS250ReadOnlySession,
     ReadOnlyCommandResult,
+    ReadOnlySessionError,
+    ReadOnlySessionErrorCode,
     SessionCredentials,
 )
 
@@ -104,7 +106,7 @@ def test_collector_runs_only_reviewed_commands_and_returns_partial_state():
     assert snapshot.device_write_authority is False
 
 
-def test_safe_export_contains_no_raw_outputs_or_credential_fields():
+def test_safe_export_contains_no_raw_outputs_or_operational_identifiers():
     executor = FakeExecutor(
         {
             "show system": SHOW_SYSTEM,
@@ -114,13 +116,13 @@ def test_safe_export_contains_no_raw_outputs_or_credential_fields():
     )
     snapshot = collect_cbs250_inventory(executor, source_revision="unit-test")
     payload = snapshot.as_safe_dict()
-    rendered = repr(payload).lower()
+    rendered = repr(payload)
 
     assert payload["credentials_exported"] is False
     assert payload["raw_command_output_exported"] is False
-    assert "password" not in rendered or "password_authentication_enabled" in rendered
     assert "00:11:22:33:44:55" not in rendered
     assert "example-switch" not in rendered
+    assert "super-secret-value" not in rendered
 
 
 def test_missing_identity_withholds_planner_state_instead_of_guessing():
@@ -137,6 +139,29 @@ def test_missing_identity_withholds_planner_state_instead_of_guessing():
     assert snapshot.observed_state is None
     assert snapshot.current_network_state is None
     assert any(error.code == "identity_incomplete" for error in snapshot.errors)
+
+
+def test_partial_command_failure_is_explicit_and_does_not_make_absence_authoritative():
+    executor = FakeExecutor(
+        {
+            "show system": SHOW_SYSTEM,
+            "show version": SHOW_VERSION,
+            "show ip ssh": ReadOnlySessionError(
+                ReadOnlySessionErrorCode.TRANSPORT_FAILED,
+                "synthetic read-only transport failure",
+            ),
+        }
+    )
+    snapshot = collect_cbs250_inventory(executor, source_revision="unit-test")
+
+    assert snapshot.fingerprint is not None
+    assert snapshot.current_network_state is not None
+    assert snapshot.current_network_state.basis.value == "observed_partial"
+    assert snapshot.current_network_state.absence_is_authoritative is False
+    assert snapshot.ssh is None
+    assert snapshot.current_network_state.management.services == ()
+    assert any(error.code == "transport_failed" for error in snapshot.errors)
+    assert "show ip ssh" not in snapshot.commands_succeeded
 
 
 def test_credentials_repr_is_redacted_and_forbidden_command_is_blocked_before_transport():
