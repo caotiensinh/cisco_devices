@@ -14,16 +14,16 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Product vision exists.
 - [x] Product specification exists.
 - [x] Implementation checklist exists.
-- [ ] Add CI check that required governance documents exist.
+- [x] Add CI check that required governance documents exist.
 - [ ] Add CI check that `global_device_write_authority=false` cannot be silently changed without a dedicated approval marker/review rule.
 - [ ] Add test/lint rule preventing secrets in committed evidence/examples.
-- [ ] Add task-template contract for agents/issues.
+- [x] Add task-template contract for agents/issues.
 
 ### P0 exit criteria
 
-- [ ] Governance CI passes.
-- [ ] Safety policy tests pass.
-- [ ] No code path grants device write authority.
+- [x] Governance CI passes.
+- [x] Safety policy tests pass.
+- [x] No code path grants device write authority.
 
 ---
 
@@ -84,7 +84,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P2.1 Backend
 
-- [ ] Define `DeviceFingerprint` schema.
+- [x] Define `DeviceFingerprint` schema.
 - [ ] Define `DeviceCapability` schema.
 - [ ] Define `ObservedState` schema.
 - [ ] Implement credential-session abstraction.
@@ -130,9 +130,9 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P3.1 Schemas
 
-- [ ] `NetworkIntent` schema.
-- [ ] `VLANIntent` schema.
-- [ ] `PortIntent` schema.
+- [x] `NetworkIntent` schema.
+- [x] `VLANIntent` schema.
+- [x] `PortIntent` schema.
 - [ ] `UplinkIntent` schema.
 - [ ] `RoutingIntent` schema.
 - [ ] `SegmentationIntent` schema.
@@ -141,43 +141,43 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P3.2 IPv4/IPAM engine
 
-- [ ] CIDR parser.
-- [ ] Netmask conversion.
-- [ ] Network address calculation.
-- [ ] Broadcast calculation.
-- [ ] First/last usable calculation.
-- [ ] Gateway strategy: explicit.
-- [ ] Gateway strategy: first usable.
-- [ ] Gateway strategy: last usable.
-- [ ] Sequential subnet generation.
-- [ ] Cross-octet progression.
-- [ ] Prefix-size aware progression.
-- [ ] Duplicate detection.
-- [ ] Overlap detection.
-- [ ] Gateway-in-subnet validation.
-- [ ] Reject gateway=network address.
-- [ ] Reject gateway=broadcast address where applicable.
-- [ ] Overflow/exhaustion errors.
-- [ ] Unit tests for /30-/16 representative ranges.
+- [x] CIDR parser.
+- [x] Netmask conversion.
+- [x] Network address calculation.
+- [x] Broadcast calculation.
+- [x] First/last usable calculation.
+- [x] Gateway strategy: explicit.
+- [x] Gateway strategy: first usable.
+- [x] Gateway strategy: last usable.
+- [x] Sequential subnet generation.
+- [x] Cross-octet progression.
+- [x] Prefix-size aware progression.
+- [x] Duplicate detection.
+- [x] Overlap detection.
+- [x] Gateway-in-subnet validation.
+- [x] Reject gateway=network address.
+- [x] Reject gateway=broadcast address where applicable.
+- [x] Overflow/exhaustion errors.
+- [x] Unit tests for /30-/16 representative ranges.
 - [ ] Boundary/property tests.
 
 ### P3.3 VLAN generator
 
-- [ ] Start VLAN ID.
-- [ ] Count.
-- [ ] Increment.
-- [ ] Naming pattern.
-- [ ] Duplicate prevention.
+- [x] Start VLAN ID.
+- [x] Count.
+- [x] Increment.
+- [x] Naming pattern.
+- [x] Duplicate prevention.
 - [ ] Capability-bound VLAN range.
 - [ ] Capability-bound max active VLAN count.
-- [ ] Sequential VLAN + subnet combined generator.
+- [x] Sequential VLAN + subnet combined generator.
 
 ### P3.4 Intent validation
 
-- [ ] VLAN references exist.
+- [x] VLAN references exist.
 - [ ] Port references exist.
 - [ ] Duplicate role conflict detection.
-- [ ] Trunk/access semantic validation.
+- [x] Trunk/access semantic validation.
 - [ ] Uplink includes required VLANs.
 - [ ] Management intent completeness.
 - [ ] Human-readable validation explanations.
