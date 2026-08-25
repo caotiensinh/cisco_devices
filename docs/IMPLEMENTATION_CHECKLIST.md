@@ -52,7 +52,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [ ] Analyze every v3.1 error/warning.
 - [ ] Normalize v3.1 dataset into `knowledge/cbs250/live/`.
 - [ ] Build documented-vs-observed capability diff.
-- [ ] Add exact firmware-bound capability registry.
+- [x] Add exact firmware-bound capability registry/profile with conservative capability states.
 - [ ] Add coverage metrics: observed/documented/unknown/blocked.
 
 ### P1.3 Read-only collector syntax
@@ -73,10 +73,10 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 ### P1 exit criteria
 
-- [ ] Exact target CBS250 capability registry is versioned.
+- [x] Exact target CBS250 capability registry/profile is versioned and exact-identity bound.
 - [ ] Read-only collectors have negative/safety tests.
 - [ ] No collector changes device configuration.
-- [ ] Unknown capability states are represented explicitly.
+- [x] Unknown/unproven capability states are represented explicitly and fail closed for future write precheck.
 
 ---
 
@@ -85,13 +85,13 @@ A checkbox is not complete because code exists. Completion requires implementati
 ### P2.1 Backend
 
 - [x] Define `DeviceFingerprint` schema.
-- [ ] Define `DeviceCapability` schema.
-- [ ] Define `ObservedState` schema.
+- [x] Define `DeviceCapability` schema.
+- [x] Define `ObservedState` schema.
 - [ ] Implement credential-session abstraction.
 - [ ] Implement connection/authentication error model.
 - [ ] Implement read-only collector orchestration.
 - [ ] Normalize collector output.
-- [ ] Add collection timestamps/source revision.
+- [x] Add required collection timestamps/source revision fields to normalized state.
 - [ ] Add evidence export.
 
 ### P2.2 Frontend
@@ -112,16 +112,17 @@ A checkbox is not complete because code exists. Completion requires implementati
 
 - [ ] Wrong password.
 - [ ] SSH unreachable.
-- [ ] Unsupported/unknown product.
-- [ ] Unsupported/unknown firmware.
+- [x] Exact profile/product/firmware mismatch validation.
+- [ ] Unsupported/unknown product discovery behavior.
+- [ ] Unsupported/unknown firmware discovery behavior.
 - [ ] Partial collector failure.
 - [ ] No-secret logging test.
-- [ ] Read-only invariant test.
+- [x] Offline intent/profile core cannot import device/network execution libraries.
 
 ### P2 exit criteria
 
 - [ ] User can connect and inspect without any write.
-- [ ] Exact device/firmware shown.
+- [ ] Exact device/firmware shown in product UI/API.
 - [ ] Collector failures are explicit, not hidden.
 
 ---
@@ -133,11 +134,11 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] `NetworkIntent` schema.
 - [x] `VLANIntent` schema.
 - [x] `PortIntent` schema.
-- [ ] `UplinkIntent` schema.
-- [ ] `RoutingIntent` schema.
-- [ ] `SegmentationIntent` schema.
-- [ ] `ManagementIntent` schema.
-- [ ] `SecurityIntent` schema.
+- [x] `UplinkIntent` schema.
+- [x] `RoutingIntent` schema.
+- [x] `SegmentationIntent` / `SegmentationRule` schema.
+- [x] `ManagementIntent` schema.
+- [x] `SecurityIntent` schema.
 
 ### P3.2 IPv4/IPAM engine
 
@@ -159,7 +160,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Reject gateway=broadcast address where applicable.
 - [x] Overflow/exhaustion errors.
 - [x] Unit tests for /30-/16 representative ranges.
-- [ ] Boundary/property tests.
+- [ ] Broader randomized/property tests.
 
 ### P3.3 VLAN generator
 
@@ -168,25 +169,31 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [x] Increment.
 - [x] Naming pattern.
 - [x] Duplicate prevention.
-- [ ] Capability-bound VLAN range.
-- [ ] Capability-bound max active VLAN count.
+- [x] Capability-profile-bound VLAN range.
+- [x] Capability-profile-bound max active VLAN count.
 - [x] Sequential VLAN + subnet combined generator.
 
 ### P3.4 Intent validation
 
 - [x] VLAN references exist.
-- [ ] Port references exist.
-- [ ] Duplicate role conflict detection.
+- [x] Declared port/uplink can be checked against `ObservedState` interfaces.
+- [x] Duplicate physical-interface/role assignment conflict detection.
 - [x] Trunk/access semantic validation.
-- [ ] Uplink includes required VLANs.
-- [ ] Management intent completeness.
-- [ ] Human-readable validation explanations.
+- [x] Uplink includes required access/management VLANs.
+- [x] Management intent completeness checks.
+- [x] Human-readable validation codes/messages/remediation.
+- [x] Exact profile fingerprint mismatch blocks validation.
+- [x] Physical port capacity validation.
+- [x] Active VLAN resource validation.
+- [x] Routed IP-interface resource validation.
+- [x] Offline design distinguishes documented capability from live-proven capability.
+- [x] Future write precheck fails closed when required capability is not `documented_and_observed`.
 
 ### P3 exit criteria
 
-- [ ] User can build a complete validated design offline.
-- [ ] All IP math is deterministic/tested.
-- [ ] No device CLI generation is required for P3 acceptance.
+- [ ] User can build every selected MVP design through a stable external API/UI.
+- [ ] Broader IPAM property/boundary test suite complete.
+- [x] No device CLI generation or device access is required for P3 validation.
 
 ---
 
@@ -217,7 +224,7 @@ A checkbox is not complete because code exists. Completion requires implementati
 - [ ] BUSINESS_STANDARD profile.
 - [ ] STRICT profile.
 - [ ] Each rule has explanation/severity/capability/risk.
-- [ ] Exact capability validation.
+- [ ] Exact capability validation for expanded security rules.
 - [ ] Unsupported rule blocks or clearly degrades according to policy.
 
 ### P4.3 Planner
