@@ -49,6 +49,20 @@ def test_sequential_networks_preserve_prefix_size():
     )
 
 
+def test_16_progression_and_facts():
+    networks = generate_sequential_networks("10.0.0.0/16", 3)
+    assert tuple(map(str, networks)) == (
+        "10.0.0.0/16",
+        "10.1.0.0/16",
+        "10.2.0.0/16",
+    )
+    facts = subnet_facts("10.0.0.0/16")
+    assert facts.netmask == "255.255.0.0"
+    assert facts.first_usable == "10.0.0.1"
+    assert facts.last_usable == "10.0.255.254"
+    assert facts.usable_host_count == 65534
+
+
 def test_subnet_facts_for_30():
     facts = subnet_facts("192.0.2.0/30")
     assert facts.netmask == "255.255.255.252"
