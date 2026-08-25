@@ -27,5 +27,8 @@ jobs:
       - name: Validate discovery safety policy
         run: python cbs250_cli_discovery_v311.py --policy-check
 
+      - name: Validate targeted L3 help policy
+        run: python cbs250_targeted_help_probe.py --policy-check
+
       - name: Run governance and safety tests
         run: python -m pytest -q
