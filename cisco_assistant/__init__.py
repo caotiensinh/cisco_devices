@@ -2,7 +2,7 @@
 
 This package is intentionally device-write-free. It contains normalized data models,
 network arithmetic, offline current state/views, capability/security profiles,
-templates/previews, semantic diff planning/dry-run analysis/workflows, and validation.
+templates/previews, semantic diff planning/dry-run analysis/export workflows, and validation.
 """
 
 from .current_state import (
@@ -15,6 +15,13 @@ from .current_state import (
     CurrentVLANState,
 )
 from .dry_run import DeviceAwareDryRun, build_device_aware_dry_run
+from .export_bundle import (
+    EXPORT_SCHEMA_VERSION,
+    DryRunExportManifest,
+    DryRunExportResult,
+    ExportedFile,
+    export_dry_run_bundle,
+)
 from .ipam import (
     GatewayStrategy,
     IPv4SubnetFacts,
@@ -131,7 +138,11 @@ __all__ = [
     "DeviceCapability",
     "DeviceFingerprint",
     "DeviceProfile",
+    "DryRunExportManifest",
+    "DryRunExportResult",
+    "EXPORT_SCHEMA_VERSION",
     "ExpandedSecurityRule",
+    "ExportedFile",
     "GatewayStrategy",
     "HardwareCapacity",
     "IPv4SubnetFacts",
@@ -191,6 +202,7 @@ __all__ = [
     "build_device_aware_dry_run",
     "build_template",
     "expand_security_profile",
+    "export_dry_run_bundle",
     "generate_sequential_networks",
     "generate_vlan_series",
     "generate_vlan_series_for_profile",
