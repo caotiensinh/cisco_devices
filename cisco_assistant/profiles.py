@@ -9,7 +9,14 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 
-from .models import CapabilityState, DeviceFingerprint, NetworkIntent, ObservedState
+from .ipam import GatewayStrategy, generate_vlan_series
+from .models import (
+    CapabilityState,
+    DeviceFingerprint,
+    NetworkIntent,
+    ObservedState,
+    VLANIntent,
+)
 from .validation import (
     ValidationIssue,
     ValidationResult,
@@ -159,6 +166,47 @@ def load_device_profile(path: str | Path) -> DeviceProfile:
 def load_cbs250_24t_4x_3_3_0_16_profile() -> DeviceProfile:
     return load_device_profile(
         "knowledge/cbs250/profiles/CBS250-24T-4X_3.3.0.16.json"
+    )
+
+
+def generate_vlan_series_for_profile(
+    profile: DeviceProfile,
+    *,
+    start_vlan_id: int,
+    count: int,
+    vlan_increment: int,
+    start_network: str,
+    gateway_strategy: GatewayStrategy | str = GatewayStrategy.FIRST_USABLE,
+    name_prefix: str = "VLAN",
+    purpose_prefix: str = "custom",
+) -> tuple[VLANIntent, ...]:
+    """Generate a sequential VLAN/IP design constrained by the selected device profile.
+
+    This is still pure offline calculation. It does not inspect current switch state and does
+    not reserve resources. The desired design is constrained by profile limits before any
+    provider/compiler stage exists.
+    """
+    if count > profile.limits.active_vlans:
+        raise ProfileError(
+            f"Requested {count} VLANs exceeds profile active VLAN limit "
+            f"{profile.limits.active_vlans}"
+        )
+
+    last_vlan_id = start_vlan_id + ((count - 1) * vlan_increment) if count > 0 else start_vlan_id
+    if start_vlan_id < profile.limits.vlan_id_min or last_vlan_id > profile.limits.vlan_id_max:
+        raise ProfileError(
+            f"Requested VLAN series {start_vlan_id}..{last_vlan_id} is outside profile range "
+            f"{profile.limits.vlan_id_min}..{profile.limits.vlan_id_max}"
+        )
+
+    return generate_vlan_series(
+        start_vlan_id=start_vlan_id,
+        count=count,
+        vlan_increment=vlan_increment,
+        start_network=start_network,
+        gateway_strategy=gateway_strategy,
+        name_prefix=name_prefix,
+        purpose_prefix=purpose_prefix,
     )
 
 
