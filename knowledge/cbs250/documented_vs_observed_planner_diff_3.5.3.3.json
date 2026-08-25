@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diff_id": "cbs250-24t-4x-3.5.3.3-planner-critical-diff-v1",
+  "scope": {
+    "product_id": "CBS250-24T-4X",
+    "firmware_version": "3.5.3.3",
+    "coverage": "PLANNER_CRITICAL_SUBSET",
+    "complete_family_capability_diff": false,
+    "live_dataset_coverage": "TRUNCATED_AT_MAX_NODES"
+  },
+  "authority": {
+    "device_write_authority": false,
+    "execution_authority": false,
+    "documented_support_grants_execution_authority": false,
+    "missing_live_help_proves_unsupported": false
+  },
+  "sources": {
+    "live_grammar": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
+    "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
+    "documented_formats": "knowledge/cbs250/documented_output_formats.json",
+    "cisco_ip_addressing": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/ip-addressing-commands.html",
+    "cisco_ip_routing": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/ip-routing-protocol-independent-commands.html"
+  },
+  "states": [
+    {
+      "capability": "device_identity_and_firmware",
+      "collector_command": "show version",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED",
+      "live_execution_state": "OBSERVED_AND_CURRENTLY_ALLOWLISTED",
+      "parser_state": "LIVE_COLLECTOR_IMPLEMENTED",
+      "planner_state": "AVAILABLE_PARTIAL",
+      "note": "Existing reviewed inventory foundation."
+    },
+    {
+      "capability": "ssh_management_state",
+      "collector_command": "show ip ssh",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED",
+      "live_execution_state": "OBSERVED_AND_CURRENTLY_ALLOWLISTED",
+      "parser_state": "LIVE_COLLECTOR_IMPLEMENTED",
+      "planner_state": "AVAILABLE_PARTIAL",
+      "note": "Existing reviewed management-plane inventory foundation."
+    },
+    {
+      "capability": "vlan_inventory",
+      "collector_command": "show vlan",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED_TERMINAL_CR",
+      "live_execution_state": "MISSING",
+      "parser_state": "DOCUMENTED_FORMAT_ONLY",
+      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_OUTPUT",
+      "note": "Priority R0 validation candidate; not in executable allowlist."
+    },
+    {
+      "capability": "physical_interface_status",
+      "collector_command": "show interfaces status",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED_TERMINAL_CR",
+      "live_execution_state": "MISSING",
+      "parser_state": "DOCUMENTED_FORMAT_ONLY",
+      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_OUTPUT",
+      "note": "Priority R0 validation candidate; physical-interface parser foundation exists but is not live validated."
+    },
+    {
+      "capability": "switchport_vlan_mode_state",
+      "collector_command": "show interfaces switchport",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED_TERMINAL_CR",
+      "live_execution_state": "MISSING",
+      "parser_state": "DOCUMENTED_FORMAT_ONLY",
+      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_OUTPUT",
+      "note": "Priority R0 validation candidate; output is internal-network sensitive."
+    },
+    {
+      "capability": "ipv4_interface_state",
+      "collector_command": "show ip interface",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_execution_state": "MISSING",
+      "parser_state": "NOT_IMPLEMENTED",
+      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_SYNTAX_AND_OUTPUT",
+      "note": "Cisco documents show ip interface for CBS250. The current truncated v3.1 transcript does not contain an exact help record; absence is not authoritative unsupported evidence."
+    },
+    {
+      "capability": "ipv4_route_state",
+      "collector_command": "show ip route",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_execution_state": "MISSING",
+      "parser_state": "NOT_IMPLEMENTED",
+      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_SYNTAX_AND_OUTPUT",
+      "note": "Cisco documents show ip route in User/Privileged EXEC and provides routing-table examples. Current v3.1 absence cannot be treated as unsupported because discovery coverage was truncated."
+    },
+    {
+      "capability": "ipv4_route_summary",
+      "collector_command": "show ip route summary",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_execution_state": "MISSING",
+      "parser_state": "NOT_IMPLEMENTED",
+      "planner_state": "OPTIONAL_AFTER_FULL_ROUTE_STATE",
+      "note": "Useful summary evidence but not a substitute for the full routing table collector."
+    },
+    {
+      "capability": "running_configuration_snapshot",
+      "collector_command": "show running-config brief",
+      "documentation_state": "DOCUMENTED",
+      "live_help_state": "OBSERVED_TERMINAL_CR",
+      "live_execution_state": "NOT_AUTHORIZED",
+      "parser_state": "BLOCKED_SENSITIVITY_REVIEW",
+      "planner_state": "HOLD_SENSITIVE_OUTPUT_REVIEW",
+      "note": "Brief excludes SSL/SSH key material according to Cisco documentation but is not proven safe from all sensitive configuration."
+    }
+  ],
+  "next_evidence_priority": [
+    "show vlan",
+    "show interfaces status",
+    "show interfaces switchport",
+    "safe context-help confirmation for show ip interface",
+    "safe context-help confirmation for show ip route"
+  ],
+  "completion_note": "This is a planner-critical subset only. It must not be used to claim the complete documented-vs-observed CBS250 family capability diff is finished."
+}
