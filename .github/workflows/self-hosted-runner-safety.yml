@@ -46,4 +46,5 @@ jobs:
 
       - name: Verify write authority remains disabled
         shell: cmd
-        run: python -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS: all device/network write authority remains disabled.')"
+        run: |
+          python -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS - all device/network write authority remains disabled.')"
