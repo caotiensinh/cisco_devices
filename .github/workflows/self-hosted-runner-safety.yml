@@ -34,14 +34,12 @@ jobs:
         shell: cmd
         run: |
           set "PYTHON_EXE="
-          if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python314\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python314\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python313\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python313\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python312\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python312\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python311\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python311\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Python314\python.exe" set "PYTHON_EXE=C:\Python314\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Python313\python.exe" set "PYTHON_EXE=C:\Python313\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Python312\python.exe" set "PYTHON_EXE=C:\Python312\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Python311\python.exe" set "PYTHON_EXE=C:\Python311\python.exe"
+          for /d %%D in ("C:\Users\cdn14\AppData\Local\Programs\Python\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
+          for /d %%D in ("C:\Program Files\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
+          for /d %%D in ("C:\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Users\cdn14\miniconda3\python.exe" set "PYTHON_EXE=C:\Users\cdn14\miniconda3\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Users\cdn14\anaconda3\python.exe" set "PYTHON_EXE=C:\Users\cdn14\anaconda3\python.exe"
+          if not defined PYTHON_EXE if exist "C:\ProgramData\miniconda3\python.exe" set "PYTHON_EXE=C:\ProgramData\miniconda3\python.exe"
           if not defined PYTHON_EXE (
             echo No approved existing Python executable was found.
             exit /b 1
