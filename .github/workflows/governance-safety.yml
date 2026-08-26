@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   governance-safety:
+    # Selector-level L3 help remains fail-closed and help-only.
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
