@@ -1,0 +1,5 @@
+One-shot R0 validation trigger.
+Candidate: show vlan only.
+Device write authority: false.
+Production network write authority: false.
+No reboot, config mutation, firmware mutation, or specific interface operation authorized.
