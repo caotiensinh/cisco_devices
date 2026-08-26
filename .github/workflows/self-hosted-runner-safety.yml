@@ -34,34 +34,26 @@ jobs:
         shell: cmd
         run: |
           set "PYTHON_EXE="
-          for /d %%D in ("C:\Users\cdn14\AppData\Local\Programs\Python\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
-          for /d %%D in ("C:\Program Files\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
-          for /d %%D in ("C:\Python*") do if not defined PYTHON_EXE if exist "%%~fD\python.exe" set "PYTHON_EXE=%%~fD\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Users\cdn14\miniconda3\python.exe" set "PYTHON_EXE=C:\Users\cdn14\miniconda3\python.exe"
-          if not defined PYTHON_EXE if exist "C:\Users\cdn14\anaconda3\python.exe" set "PYTHON_EXE=C:\Users\cdn14\anaconda3\python.exe"
-          if not defined PYTHON_EXE if exist "C:\ProgramData\miniconda3\python.exe" set "PYTHON_EXE=C:\ProgramData\miniconda3\python.exe"
+          for /f "delims=" %%P in ('dir /b /s "C:\Users\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
+          if not defined PYTHON_EXE for /f "delims=" %%P in ('dir /b /s "C:\Program Files\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
+          if not defined PYTHON_EXE for /f "delims=" %%P in ('dir /b /s "C:\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
           if not defined PYTHON_EXE (
-            echo No approved existing Python executable was found.
+            echo No accessible Python 3.12 executable was found by the service account.
             exit /b 1
           )
+          echo ::add-mask::%PYTHON_EXE%
           echo PYTHON_EXE=%PYTHON_EXE%>>"%GITHUB_ENV%"
           "%PYTHON_EXE%" --version
 
-      - name: Create isolated runner virtual environment
-        shell: cmd
-        run: |
-          "%PYTHON_EXE%" -m venv .runner-venv
-          .runner-venv\Scripts\python.exe -m pip install --disable-pip-version-check -r requirements.txt
-
       - name: Validate discovery safety policy offline
         shell: cmd
-        run: .runner-venv\Scripts\python.exe .\cbs250_cli_discovery_v311.py --policy-check
+        run: "%PYTHON_EXE%" .\cbs250_cli_discovery_v311.py --policy-check
 
       - name: Validate targeted L3 help policy offline
         shell: cmd
-        run: .runner-venv\Scripts\python.exe .\cbs250_targeted_help_probe.py --policy-check
+        run: "%PYTHON_EXE%" .\cbs250_targeted_help_probe.py --policy-check
 
       - name: Verify write authority remains disabled
         shell: cmd
         run: |
-          .runner-venv\Scripts\python.exe -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS - all device/network write authority remains disabled.')"
+          "%PYTHON_EXE%" -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS - all device/network write authority remains disabled.')"
