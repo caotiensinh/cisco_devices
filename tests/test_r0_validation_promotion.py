@@ -7,9 +7,9 @@ from cisco_assistant.r0_validation_promotion import evaluate_r0_validation_evide
 
 def valid_payload() -> dict[str, object]:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "record_type": "R0_LIVE_OUTPUT_VALIDATION",
-        "tool_version": "1.0.0",
+        "tool_version": "1.1.0",
         "status": "PASS_LIVE_PARSER_VALIDATED",
         "target": {
             "product_id": "CBS250-24T-4X",
@@ -17,7 +17,8 @@ def valid_payload() -> dict[str, object]:
         },
         "command": "show vlan",
         "risk_class": "R0",
-        "raw_output_sha256": "sha256:" + "a" * 64,
+        "normalized_output_sha256": "sha256:" + "a" * 64,
+        "output_digest_scope": "CLEAN_TERMINAL_TEXT_UTF8",
         "raw_output_retained": False,
         "parser": "parse_documented_show_vlan",
         "parser_result": "PASS",
@@ -50,6 +51,18 @@ def test_valid_sanitized_evidence_is_only_eligible_for_separate_promotion_review
     assert decision.command == "show vlan"
     assert decision.product_id == "CBS250-24T-4X"
     assert decision.firmware_version == "3.5.3.3"
+
+
+def test_legacy_schema_v1_is_not_promotion_eligible() -> None:
+    payload = valid_payload()
+    payload["schema_version"] = 1
+    payload.pop("normalized_output_sha256")
+    payload.pop("output_digest_scope")
+    payload["raw_output_sha256"] = "sha256:" + "a" * 64
+    decision = evaluate_r0_validation_evidence(payload)
+    assert decision.eligible_for_promotion_review is False
+    assert "schema_version_mismatch" in decision.reasons
+    assert "legacy_raw_output_digest_field_present" in decision.reasons
 
 
 def test_wrong_exact_target_fails_closed() -> None:
@@ -108,11 +121,15 @@ def test_missing_safety_field_fails_closed() -> None:
     assert "safety_pager_navigation_sent_invalid" in decision.reasons
 
 
-def test_hash_rows_and_vlan_ids_are_strictly_validated() -> None:
+def test_hash_scope_rows_and_vlan_ids_are_strictly_validated() -> None:
     bad_payloads = []
 
     payload = valid_payload()
-    payload["raw_output_sha256"] = "sha256:not-a-real-digest"
+    payload["normalized_output_sha256"] = "sha256:not-a-real-digest"
+    bad_payloads.append(payload)
+
+    payload = valid_payload()
+    payload["output_digest_scope"] = "RAW_TRANSPORT_BYTES"
     bad_payloads.append(payload)
 
     payload = valid_payload()
