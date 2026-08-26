@@ -1,0 +1,92 @@
+name: CBS250 R0 Show VLAN One Shot
+
+on:
+  push:
+    branches:
+      - live-test/r0-show-vlan-once-20260826
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cbs250-r0-show-vlan-one-shot
+  cancel-in-progress: false
+
+jobs:
+  r0-show-vlan:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 20
+    env:
+      CBS_HOST: ${{ secrets.CBS250_HOST }}
+      CBS_USERNAME: ${{ secrets.CBS250_USERNAME }}
+      CBS_PASSWORD: ${{ secrets.CBS250_PASSWORD }}
+
+    steps:
+      - name: Checkout exact one-shot branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Locate runner-local Python
+        shell: cmd
+        run: |
+          for %%I in ("%RUNNER_TEMP%\..\..") do set "RUNNER_ROOT=%%~fI"
+          set "PYTHON_BASE=%RUNNER_ROOT%\_tooling\Python312\python.exe"
+          if not exist "%PYTHON_BASE%" exit /b 1
+          echo ::add-mask::%PYTHON_BASE%
+          echo PYTHON_BASE=%PYTHON_BASE%>>"%GITHUB_ENV%"
+          "%PYTHON_BASE%" --version
+
+      - name: Require secrets before any device access
+        shell: cmd
+        run: |
+          if "%CBS_HOST%"=="" exit /b 1
+          if "%CBS_USERNAME%"=="" exit /b 1
+          if "%CBS_PASSWORD%"=="" exit /b 1
+          echo Secret-backed target credentials are present.
+
+      - name: Create isolated test environment
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-r0-vlan-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
+          "%PYTHON_BASE%" -m venv "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
+          set "TEST_PY=%RUNNER_TEMP%\cbs250-r0-vlan-venv\Scripts\python.exe"
+          echo ::add-mask::%TEST_PY%
+          echo TEST_PY=%TEST_PY%>>"%GITHUB_ENV%"
+          "%TEST_PY%" -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Run full offline gates before SSH
+        shell: cmd
+        run: |
+          "%TEST_PY%" .\cbs250_cli_discovery_v311.py --policy-check
+          "%TEST_PY%" .\cbs250_targeted_help_probe.py --policy-check
+          "%TEST_PY%" .\cbs250_l3_selector_help_probe.py --policy-check
+          "%TEST_PY%" .\cbs250_r0_vlan_validation.py --policy-check
+          "%TEST_PY%" -m pytest -q
+
+      - name: Enforce no-write authority before live validation
+        shell: cmd
+        run: |
+          "%TEST_PY%" -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); assert d['global_device_write_authority'] is False; assert d['production_network_write_authority'] is False; print('PASS - all write authority remains disabled.')"
+
+      - name: Run exact show vlan validation only
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-r0-show-vlan" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-show-vlan"
+          mkdir "%RUNNER_TEMP%\cbs250-r0-show-vlan"
+          "%TEST_PY%" .\cbs250_r0_vlan_validation.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output "%RUNNER_TEMP%\cbs250-r0-show-vlan\show_vlan_validation.sanitized.json"
+
+      - name: Upload sanitized validation only
+        uses: actions/upload-artifact@v4
+        with:
+          name: cbs250-r0-show-vlan-sanitized
+          path: ${{ runner.temp }}/cbs250-r0-show-vlan/show_vlan_validation.sanitized.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove temporary validation state
+        if: always()
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-r0-show-vlan" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-show-vlan"
+          if exist "%RUNNER_TEMP%\cbs250-r0-vlan-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
