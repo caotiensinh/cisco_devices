@@ -34,7 +34,7 @@ jobs:
         shell: cmd
         run: |
           set "PYTHON_EXE="
-          for /f "delims=" %%P in ('dir /b /s "C:\Users\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
+          for /f "delims=" %%P in ('dir /b /s "C:\Users\*\AppData\Local\Programs\Python\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
           if not defined PYTHON_EXE for /f "delims=" %%P in ('dir /b /s "C:\Program Files\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
           if not defined PYTHON_EXE for /f "delims=" %%P in ('dir /b /s "C:\Python312\python.exe" 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
           if not defined PYTHON_EXE (
