@@ -30,27 +30,40 @@ jobs:
           echo Runner arch: %RUNNER_ARCH%
           echo This workflow does not access the switch.
 
-      - name: Set up Python for this runner job
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          check-latest: false
-
-      - name: Locate Python
+      - name: Locate existing Python without changing Windows policy
         shell: cmd
         run: |
-          where python
-          python --version
+          set "PYTHON_EXE="
+          if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python314\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python314\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python313\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python313\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python312\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python312\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Users\cdn14\AppData\Local\Programs\Python\Python311\python.exe" set "PYTHON_EXE=C:\Users\cdn14\AppData\Local\Programs\Python\Python311\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Python314\python.exe" set "PYTHON_EXE=C:\Python314\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Python313\python.exe" set "PYTHON_EXE=C:\Python313\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Python312\python.exe" set "PYTHON_EXE=C:\Python312\python.exe"
+          if not defined PYTHON_EXE if exist "C:\Python311\python.exe" set "PYTHON_EXE=C:\Python311\python.exe"
+          if not defined PYTHON_EXE (
+            echo No approved existing Python executable was found.
+            exit /b 1
+          )
+          echo PYTHON_EXE=%PYTHON_EXE%>>"%GITHUB_ENV%"
+          "%PYTHON_EXE%" --version
+
+      - name: Create isolated runner virtual environment
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" -m venv .runner-venv
+          .runner-venv\Scripts\python.exe -m pip install --disable-pip-version-check -r requirements.txt
 
       - name: Validate discovery safety policy offline
         shell: cmd
-        run: python .\cbs250_cli_discovery_v311.py --policy-check
+        run: .runner-venv\Scripts\python.exe .\cbs250_cli_discovery_v311.py --policy-check
 
       - name: Validate targeted L3 help policy offline
         shell: cmd
-        run: python .\cbs250_targeted_help_probe.py --policy-check
+        run: .runner-venv\Scripts\python.exe .\cbs250_targeted_help_probe.py --policy-check
 
       - name: Verify write authority remains disabled
         shell: cmd
         run: |
-          python -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS - all device/network write authority remains disabled.')"
+          .runner-venv\Scripts\python.exe -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS - all device/network write authority remains disabled.')"
