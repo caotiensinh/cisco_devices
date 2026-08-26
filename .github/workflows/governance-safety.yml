@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: governance-safety-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   governance-safety:
     # Selector-level L3 help remains fail-closed and help-only.
