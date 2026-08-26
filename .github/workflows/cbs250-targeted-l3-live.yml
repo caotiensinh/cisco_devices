@@ -1,0 +1,98 @@
+name: CBS250 Targeted L3 Help Live
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cbs250-targeted-l3-help-live
+  cancel-in-progress: false
+
+jobs:
+  targeted-l3-help:
+    if: github.actor == 'caotiensinh'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    env:
+      CBS_HOST: ${{ secrets.CBS250_HOST }}
+      CBS_USERNAME: ${{ secrets.CBS250_USERNAME }}
+      CBS_PASSWORD: ${{ secrets.CBS250_PASSWORD }}
+
+    steps:
+      - name: Checkout exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Locate runner-local Python
+        shell: cmd
+        run: |
+          for %%I in ("%RUNNER_TEMP%\..\..") do set "RUNNER_ROOT=%%~fI"
+          set "PYTHON_EXE=%RUNNER_ROOT%\_tooling\Python312\python.exe"
+          if not exist "%PYTHON_EXE%" (
+            echo Runner-local Python is not provisioned.
+            exit /b 1
+          )
+          echo ::add-mask::%PYTHON_EXE%
+          echo PYTHON_EXE=%PYTHON_EXE%>>"%GITHUB_ENV%"
+          "%PYTHON_EXE%" --version
+
+      - name: Require secret-backed target credentials
+        shell: cmd
+        run: |
+          if "%CBS_HOST%"=="" (
+            echo CBS250_HOST secret is missing.
+            exit /b 1
+          )
+          if "%CBS_USERNAME%"=="" (
+            echo CBS250_USERNAME secret is missing.
+            exit /b 1
+          )
+          if "%CBS_PASSWORD%"=="" (
+            echo CBS250_PASSWORD secret is missing.
+            exit /b 1
+          )
+          echo Target credentials are present and remain masked.
+
+      - name: Validate discovery safety policy offline
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" .\cbs250_cli_discovery_v311.py --policy-check
+
+      - name: Validate targeted L3 help policy offline
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" .\cbs250_targeted_help_probe.py --policy-check
+
+      - name: Verify write authority remains disabled
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); assert d['global_device_write_authority'] is False; assert d['production_network_write_authority'] is False; print('PASS - write authority remains disabled.')"
+
+      - name: Run exact-target help-only probe
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3" rmdir /s /q "%RUNNER_TEMP%\cbs250-targeted-l3"
+          "%PYTHON_EXE%" .\cbs250_targeted_help_probe.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output-dir "%RUNNER_TEMP%\cbs250-targeted-l3"
+
+      - name: Sanitize completed grammar evidence
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" .\cbs250_targeted_help_evidence_ingest.py --input-summary "%RUNNER_TEMP%\cbs250-targeted-l3\targeted_l3_help_summary.json" --output "%RUNNER_TEMP%\cbs250-targeted-l3-sanitized.json"
+
+      - name: Upload sanitized evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: cbs250-targeted-l3-sanitized
+          path: ${{ runner.temp }}/cbs250-targeted-l3-sanitized.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove raw local evidence
+        if: always()
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3" rmdir /s /q "%RUNNER_TEMP%\cbs250-targeted-l3"
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3-sanitized.json" del /q "%RUNNER_TEMP%\cbs250-targeted-l3-sanitized.json"
