@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "record_type": "TARGETED_CONTEXT_HELP_DIAGNOSTIC",
+  "product_id": "CBS250-24T-4X",
+  "firmware_version": "3.5.3.3",
+  "source_summary_sha256": "sha256:bbf959f2751dbffca89f9fa36ecc89c45ae52752fb57c645956b331be1338262",
+  "source_artifact_digest": "sha256:aaa97b445b2128a9eb5bea1f7300b35340c742d368292a03a1fa8913e34ed4b4",
+  "source_workflow_run": 32982556096,
+  "tool_version": "1.1.0",
+  "source_status": "BLOCKED_INCOMPLETE_EVIDENCE",
+  "evidence_status": "SAFE_DIAGNOSTIC_ONLY",
+  "device_write_authority": false,
+  "execution_authority": false,
+  "collector_approval_authority": false,
+  "prefixes": [
+    {
+      "prefix": "show ip interface",
+      "paginated": false,
+      "terminal_cr_observed": false,
+      "observed_tokens": [
+        "GigabitEthernet",
+        "GE",
+        "TenGigabitEthernet",
+        "XG",
+        "Port-Channel",
+        "Loopback",
+        "Tunnel",
+        "Vlan",
+        "|"
+      ]
+    },
+    {
+      "prefix": "show ip route",
+      "paginated": false,
+      "terminal_cr_observed": false,
+      "observed_tokens": [
+        "address",
+        "connected",
+        "static",
+        "rejected",
+        "summary",
+        "|"
+      ]
+    },
+    {
+      "prefix": "show ip route summary",
+      "paginated": false,
+      "terminal_cr_observed": false,
+      "observed_tokens": [
+        "|"
+      ]
+    }
+  ],
+  "note": "Exact-target safe diagnostic context-help evidence only. No L3 candidate command was executed. No write/config/reboot/port authority is granted."
+}
