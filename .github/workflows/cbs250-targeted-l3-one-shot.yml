@@ -1,0 +1,94 @@
+name: CBS250 Targeted L3 One Shot
+
+on:
+  push:
+    branches:
+      - live-test/targeted-l3-once-20260826
+    paths:
+      - ".github/workflows/cbs250-targeted-l3-one-shot.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cbs250-targeted-l3-one-shot-20260826
+  cancel-in-progress: false
+
+jobs:
+  targeted-l3-help:
+    if: github.actor == 'caotiensinh'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    env:
+      CBS_HOST: ${{ secrets.CBS250_HOST }}
+      CBS_USERNAME: ${{ secrets.CBS250_USERNAME }}
+      CBS_PASSWORD: ${{ secrets.CBS250_PASSWORD }}
+
+    steps:
+      - name: Checkout exact one-shot branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Locate runner-local Python
+        shell: cmd
+        run: |
+          for %%I in ("%RUNNER_TEMP%\..\..") do set "RUNNER_ROOT=%%~fI"
+          set "PYTHON_EXE=%RUNNER_ROOT%\_tooling\Python312\python.exe"
+          if not exist "%PYTHON_EXE%" (
+            echo Runner-local Python is not provisioned.
+            exit /b 1
+          )
+          echo ::add-mask::%PYTHON_EXE%
+          echo PYTHON_EXE=%PYTHON_EXE%>>"%GITHUB_ENV%"
+          "%PYTHON_EXE%" --version
+
+      - name: Require secret-backed credentials before any network access
+        shell: cmd
+        run: |
+          if "%CBS_HOST%"=="" (
+            echo CBS250_HOST secret is missing. No switch connection attempted.
+            exit /b 1
+          )
+          if "%CBS_USERNAME%"=="" (
+            echo CBS250_USERNAME secret is missing. No switch connection attempted.
+            exit /b 1
+          )
+          if "%CBS_PASSWORD%"=="" (
+            echo CBS250_PASSWORD secret is missing. No switch connection attempted.
+            exit /b 1
+          )
+          echo Secret-backed target credentials are present.
+
+      - name: Enforce no-write authority before live access
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); assert d['global_device_write_authority'] is False; assert d['production_network_write_authority'] is False; print('PASS - all write authority remains disabled.')"
+          "%PYTHON_EXE%" .\cbs250_cli_discovery_v311.py --policy-check
+          "%PYTHON_EXE%" .\cbs250_targeted_help_probe.py --policy-check
+
+      - name: Run exact-target context-help only
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot" rmdir /s /q "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot"
+          "%PYTHON_EXE%" .\cbs250_targeted_help_probe.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output-dir "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot"
+
+      - name: Sanitize grammar evidence
+        shell: cmd
+        run: |
+          "%PYTHON_EXE%" .\cbs250_targeted_help_evidence_ingest.py --input-summary "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot\targeted_l3_help_summary.json" --output "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot.sanitized.json"
+
+      - name: Upload sanitized evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: cbs250-targeted-l3-one-shot-sanitized
+          path: ${{ runner.temp }}/cbs250-targeted-l3-one-shot.sanitized.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove all local probe evidence
+        if: always()
+        shell: cmd
+        run: |
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot" rmdir /s /q "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot"
+          if exist "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot.sanitized.json" del /q "%RUNNER_TEMP%\cbs250-targeted-l3-one-shot.sanitized.json"
