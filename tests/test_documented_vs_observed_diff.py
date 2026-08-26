@@ -28,7 +28,9 @@ def test_planner_diff_is_scoped_and_grants_no_authority():
     payload = load_diff()
     assert payload["scope"]["coverage"] == "PLANNER_CRITICAL_SUBSET"
     assert payload["scope"]["complete_family_capability_diff"] is False
-    assert payload["scope"]["live_dataset_coverage"] == "TRUNCATED_AT_MAX_NODES"
+    assert payload["scope"]["live_dataset_coverage"] == (
+        "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP"
+    )
 
     authority = payload["authority"]
     assert authority["device_write_authority"] is False
@@ -37,15 +39,32 @@ def test_planner_diff_is_scoped_and_grants_no_authority():
     assert authority["missing_live_help_proves_unsupported"] is False
 
 
-def test_l3_documented_commands_remain_unobserved_and_unallowlisted():
+def test_l3_documented_commands_are_help_observed_but_still_unallowlisted():
     entries = entries_by_command()
-    for command in ("show ip interface", "show ip route", "show ip route summary"):
-        entry = entries[command]
+
+    interface_entry = entries["show ip interface"]
+    route_entry = entries["show ip route"]
+    summary_entry = entries["show ip route summary"]
+
+    for command, entry in (
+        ("show ip interface", interface_entry),
+        ("show ip route", route_entry),
+        ("show ip route summary", summary_entry),
+    ):
         assert entry["documentation_state"] == "DOCUMENTED"
-        assert entry["live_help_state"] == "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET"
         assert entry["live_execution_state"] == "MISSING"
         assert command not in READ_ONLY_EXEC_ALLOWLIST
         assert "UNSUPPORTED" not in entry["live_help_state"]
+
+    assert interface_entry["live_help_state"] == (
+        "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR"
+    )
+    assert route_entry["live_help_state"] == (
+        "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR"
+    )
+    assert summary_entry["live_help_state"] == (
+        "OBSERVED_FILTER_ONLY_HELP_NO_TERMINAL_CR"
+    )
 
 
 def test_priority_vlan_and_port_commands_are_help_observed_but_not_executable():
