@@ -1,0 +1,60 @@
+name: Self-Hosted Runner Safety Check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/self-hosted-runner-safety.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cbs250-self-hosted-runner-safety
+  cancel-in-progress: false
+
+jobs:
+  runner-safety:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Report runner identity
+        shell: powershell
+        run: |
+          Write-Host "Runner name: $env:RUNNER_NAME"
+          Write-Host "Runner OS:   $env:RUNNER_OS"
+          Write-Host "Runner arch: $env:RUNNER_ARCH"
+          Write-Host "This workflow does not access the switch."
+
+      - name: Locate Python
+        shell: powershell
+        run: |
+          $python = Get-Command python -ErrorAction SilentlyContinue
+          if (-not $python) {
+            throw "Python is required on the self-hosted runner PATH."
+          }
+          python --version
+
+      - name: Validate discovery safety policy offline
+        shell: powershell
+        run: python .\cbs250_cli_discovery_v311.py --policy-check
+
+      - name: Validate targeted L3 help policy offline
+        shell: powershell
+        run: python .\cbs250_targeted_help_probe.py --policy-check
+
+      - name: Verify write authority remains disabled
+        shell: powershell
+        run: |
+          $scope = Get-Content .\governance\project_scope.json -Raw | ConvertFrom-Json
+          if ($scope.authority.global_device_write_authority -ne $false) {
+            throw "global_device_write_authority must remain false"
+          }
+          if ($scope.authority.production_network_write_authority -ne $false) {
+            throw "production_network_write_authority must remain false"
+          }
+          Write-Host "PASS: all device/network write authority remains disabled."
