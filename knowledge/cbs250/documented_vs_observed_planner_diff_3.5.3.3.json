@@ -6,7 +6,7 @@
     "firmware_version": "3.5.3.3",
     "coverage": "PLANNER_CRITICAL_SUBSET",
     "complete_family_capability_diff": false,
-    "live_dataset_coverage": "TRUNCATED_AT_MAX_NODES"
+    "live_dataset_coverage": "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP"
   },
   "authority": {
     "device_write_authority": false,
@@ -16,6 +16,7 @@
   },
   "sources": {
     "live_grammar": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
+    "targeted_l3_help_diagnostic": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260826_l3_help_diagnostic.json",
     "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
     "documented_formats": "knowledge/cbs250/documented_output_formats.json",
     "cisco_ip_addressing": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/ip-addressing-commands.html",
@@ -76,31 +77,31 @@
       "capability": "ipv4_interface_state",
       "collector_command": "show ip interface",
       "documentation_state": "DOCUMENTED",
-      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_help_state": "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR",
       "live_execution_state": "MISSING",
       "parser_state": "NOT_IMPLEMENTED",
-      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_SYNTAX_AND_OUTPUT",
-      "note": "Cisco documents show ip interface for CBS250. The current truncated v3.1 transcript does not contain an exact help record; absence is not authoritative unsupported evidence."
+      "planner_state": "BLOCKED_NEEDS_EXACT_SELECTOR_GRAMMAR_AND_OUTPUT",
+      "note": "Exact 3.5.3.3 help exposes GigabitEthernet/GE, TenGigabitEthernet/XG, Port-Channel, Loopback, Tunnel, Vlan and pipe tokens; no terminal <CR> was observed at the bare prefix. No candidate command was executed."
     },
     {
       "capability": "ipv4_route_state",
       "collector_command": "show ip route",
       "documentation_state": "DOCUMENTED",
-      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_help_state": "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR",
       "live_execution_state": "MISSING",
       "parser_state": "NOT_IMPLEMENTED",
-      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_SYNTAX_AND_OUTPUT",
-      "note": "Cisco documents show ip route in User/Privileged EXEC and provides routing-table examples. Current v3.1 absence cannot be treated as unsupported because discovery coverage was truncated."
+      "planner_state": "BLOCKED_NEEDS_EXACT_SELECTOR_GRAMMAR_AND_OUTPUT",
+      "note": "Exact 3.5.3.3 help exposes address, connected, static, rejected, summary and pipe tokens; no terminal <CR> was observed at the bare prefix. No candidate command was executed."
     },
     {
       "capability": "ipv4_route_summary",
       "collector_command": "show ip route summary",
       "documentation_state": "DOCUMENTED",
-      "live_help_state": "DOCUMENTED_NOT_OBSERVED_IN_CURRENT_DATASET",
+      "live_help_state": "OBSERVED_FILTER_ONLY_HELP_NO_TERMINAL_CR",
       "live_execution_state": "MISSING",
       "parser_state": "NOT_IMPLEMENTED",
-      "planner_state": "OPTIONAL_AFTER_FULL_ROUTE_STATE",
-      "note": "Useful summary evidence but not a substitute for the full routing table collector."
+      "planner_state": "OPTIONAL_PENDING_TERMINAL_GRAMMAR_PROOF",
+      "note": "Exact 3.5.3.3 context help returned only the pipe token and no terminal <CR>. This is safe observed help evidence, not execution proof and not unsupported proof."
     },
     {
       "capability": "running_configuration_snapshot",
@@ -117,8 +118,8 @@
     "show vlan",
     "show interfaces status",
     "show interfaces switchport",
-    "safe context-help confirmation for show ip interface",
-    "safe context-help confirmation for show ip route"
+    "safe selector-level context-help expansion for show ip interface",
+    "safe selector-level context-help expansion for show ip route"
   ],
   "completion_note": "This is a planner-critical subset only. It must not be used to claim the complete documented-vs-observed CBS250 family capability diff is finished."
 }
