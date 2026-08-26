@@ -6,7 +6,8 @@ This tool is intentionally NOT a collector. It validates exactly one candidate c
 no reboot/reload, no port operation, and no other candidate command.
 
 Raw device output remains local and is never written to the sanitized result. If the
-output paginates, the tool sends no pager key and fails closed.
+output paginates, the tool sends no pager key and fails closed. The exported digest is
+explicitly over cleaned/normalized terminal text, not raw transport bytes.
 """
 from __future__ import annotations
 
@@ -36,10 +37,12 @@ from cisco_assistant.documented_output_parsers import (
 from cisco_assistant.read_only_collectors import parse_show_system, parse_show_version
 
 
-TOOL_VERSION = "1.0.0"
+TOOL_VERSION = "1.1.0"
+SCHEMA_VERSION = 2
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
 VALIDATION_COMMAND = "show vlan"
+OUTPUT_DIGEST_SCOPE = "CLEAN_TERMINAL_TEXT_UTF8"
 
 
 class VLANValidationError(RuntimeError):
@@ -117,10 +120,10 @@ def build_sanitized_result(target: dict[str, str], text: str) -> dict[str, objec
     except DocumentedParserError as exc:
         raise VLANValidationError(f"Exact live show vlan parser validation failed: {exc}") from exc
 
-    raw_digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+    normalized_digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
     vlan_ids = sorted({row.vlan_id for row in rows})
     return {
-        "schema_version": 1,
+        "schema_version": SCHEMA_VERSION,
         "record_type": "R0_LIVE_OUTPUT_VALIDATION",
         "tool_version": TOOL_VERSION,
         "generated_at_utc": utc_now(),
@@ -128,7 +131,8 @@ def build_sanitized_result(target: dict[str, str], text: str) -> dict[str, objec
         "target": target,
         "command": VALIDATION_COMMAND,
         "risk_class": "R0",
-        "raw_output_sha256": raw_digest,
+        "normalized_output_sha256": normalized_digest,
+        "output_digest_scope": OUTPUT_DIGEST_SCOPE,
         "raw_output_retained": False,
         "parser": "parse_documented_show_vlan",
         "parser_result": "PASS",
@@ -175,6 +179,7 @@ def policy_check() -> int:
     validate_static_policy()
     print("[PASS] show vlan validation-only policy")
     print("[PASS] collector allowlist remains unchanged")
+    print(f"[PASS] sanitized evidence schema v{SCHEMA_VERSION} uses {OUTPUT_DIGEST_SCOPE}")
     return 0
 
 
