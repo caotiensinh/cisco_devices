@@ -34,5 +34,8 @@ jobs:
       - name: Validate selector-level L3 help policy
         run: python cbs250_l3_selector_help_probe.py --policy-check
 
+      - name: Validate isolated show vlan R0 policy
+        run: python cbs250_r0_vlan_validation.py --policy-check
+
       - name: Run governance and safety tests
         run: python -m pytest -q
