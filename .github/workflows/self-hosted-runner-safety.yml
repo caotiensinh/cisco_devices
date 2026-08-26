@@ -23,38 +23,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Report runner identity
-        shell: powershell
+        shell: cmd
         run: |
-          Write-Host "Runner name: $env:RUNNER_NAME"
-          Write-Host "Runner OS:   $env:RUNNER_OS"
-          Write-Host "Runner arch: $env:RUNNER_ARCH"
-          Write-Host "This workflow does not access the switch."
+          echo Runner name: %RUNNER_NAME%
+          echo Runner OS:   %RUNNER_OS%
+          echo Runner arch: %RUNNER_ARCH%
+          echo This workflow does not access the switch.
 
       - name: Locate Python
-        shell: powershell
+        shell: cmd
         run: |
-          $python = Get-Command python -ErrorAction SilentlyContinue
-          if (-not $python) {
-            throw "Python is required on the self-hosted runner PATH."
-          }
+          where python
           python --version
 
       - name: Validate discovery safety policy offline
-        shell: powershell
+        shell: cmd
         run: python .\cbs250_cli_discovery_v311.py --policy-check
 
       - name: Validate targeted L3 help policy offline
-        shell: powershell
+        shell: cmd
         run: python .\cbs250_targeted_help_probe.py --policy-check
 
       - name: Verify write authority remains disabled
-        shell: powershell
-        run: |
-          $scope = Get-Content .\governance\project_scope.json -Raw | ConvertFrom-Json
-          if ($scope.authority.global_device_write_authority -ne $false) {
-            throw "global_device_write_authority must remain false"
-          }
-          if ($scope.authority.production_network_write_authority -ne $false) {
-            throw "production_network_write_authority must remain false"
-          }
-          Write-Host "PASS: all device/network write authority remains disabled."
+        shell: cmd
+        run: python -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); a=d['authority']; assert a['global_device_write_authority'] is False, 'global_device_write_authority must remain false'; assert a['production_network_write_authority'] is False, 'production_network_write_authority must remain false'; print('PASS: all device/network write authority remains disabled.')"
