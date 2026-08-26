@@ -1,2 +1,3 @@
 One-shot trigger for branch-scoped CBS250 R0 show vlan validation.
+Second trigger after workflow registration on the default branch.
 No production or device write authority is granted by this file.
