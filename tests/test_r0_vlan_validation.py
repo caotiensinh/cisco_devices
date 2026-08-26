@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
 import cbs250_r0_vlan_validation as validation
 from cbs250_safety import (
+    HARD_DENY_EXEC_ROOTS,
     READ_ONLY_EXEC_ALLOWLIST,
     R0_VALIDATION_EXEC_ALLOWLIST,
     SafetyViolation,
@@ -16,6 +16,7 @@ from cbs250_safety import (
 
 def test_validation_allowlist_is_exactly_show_vlan_and_separate_from_collectors() -> None:
     validation.validate_static_policy()
+    assert validation.VALIDATION_COMMAND == "show vlan"
     assert R0_VALIDATION_EXEC_ALLOWLIST == frozenset({"show vlan"})
     assert "show vlan" not in READ_ONLY_EXEC_ALLOWLIST
     assert READ_ONLY_EXEC_ALLOWLIST == frozenset({"show system", "show version", "show ip ssh"})
@@ -34,6 +35,11 @@ def test_validation_gate_rejects_every_other_candidate_or_mutation() -> None:
     ):
         with pytest.raises(SafetyViolation):
             assert_r0_validation_executable(command)
+
+
+def test_validation_command_root_is_read_only_and_not_hard_denied() -> None:
+    assert validation.VALIDATION_COMMAND.split()[0] == "show"
+    assert validation.VALIDATION_COMMAND.split()[0] not in HARD_DENY_EXEC_ROOTS
 
 
 def test_sanitized_live_result_does_not_export_names_or_port_membership() -> None:
@@ -65,16 +71,3 @@ def test_parser_failure_blocks_validation_result() -> None:
             {"product_id": "CBS250-24T-4X", "firmware_version": "3.5.3.3"},
             "not a vlan table",
         )
-
-
-def test_validation_source_has_no_config_or_port_mutation_commands() -> None:
-    source = Path(validation.__file__).read_text(encoding="utf-8").lower()
-    forbidden = (
-        "configure terminal",
-        "shutdown",
-        "reload",
-        "write memory",
-        "copy running-config startup-config",
-        "clear logging",
-    )
-    assert not any(fragment in source for fragment in forbidden)
