@@ -30,6 +30,12 @@ jobs:
           echo Runner arch: %RUNNER_ARCH%
           echo This workflow does not access the switch.
 
+      - name: Set up Python for this runner job
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          check-latest: false
+
       - name: Locate Python
         shell: cmd
         run: |
