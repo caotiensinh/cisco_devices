@@ -1,6 +1,6 @@
 """Offline fail-closed review gate for R0 live-output validation evidence.
 
-This module never connects to a device and never mutates execution allowlists.  It only
+This module never connects to a device and never mutates execution allowlists. It only
 answers whether a sanitized validation artifact is structurally eligible for a separate
 human/code-review promotion decision.
 """
@@ -11,13 +11,14 @@ import re
 from typing import Mapping, Sequence
 
 
-EXPECTED_SCHEMA_VERSION = 1
+EXPECTED_SCHEMA_VERSION = 2
 EXPECTED_RECORD_TYPE = "R0_LIVE_OUTPUT_VALIDATION"
 EXPECTED_STATUS = "PASS_LIVE_PARSER_VALIDATED"
 EXPECTED_COMMAND = "show vlan"
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
 EXPECTED_PARSER = "parse_documented_show_vlan"
+EXPECTED_DIGEST_SCOPE = "CLEAN_TERMINAL_TEXT_UTF8"
 SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
@@ -69,6 +70,8 @@ def evaluate_r0_validation_evidence(payload: Mapping[str, object]) -> PromotionR
 
     if payload.get("schema_version") != EXPECTED_SCHEMA_VERSION:
         reasons.append("schema_version_mismatch")
+    if "raw_output_sha256" in payload:
+        reasons.append("legacy_raw_output_digest_field_present")
     if payload.get("record_type") != EXPECTED_RECORD_TYPE:
         reasons.append("record_type_mismatch")
     if payload.get("status") != EXPECTED_STATUS:
@@ -91,8 +94,10 @@ def evaluate_r0_validation_evidence(payload: Mapping[str, object]) -> PromotionR
         reasons.append("observed_vlan_ids_invalid")
     if payload.get("raw_output_retained") is not False:
         reasons.append("raw_output_retained")
-    if not isinstance(payload.get("raw_output_sha256"), str) or not SHA256_RE.fullmatch(str(payload.get("raw_output_sha256"))):
-        reasons.append("raw_output_sha256_invalid")
+    if not isinstance(payload.get("normalized_output_sha256"), str) or not SHA256_RE.fullmatch(str(payload.get("normalized_output_sha256"))):
+        reasons.append("normalized_output_sha256_invalid")
+    if payload.get("output_digest_scope") != EXPECTED_DIGEST_SCOPE:
+        reasons.append("output_digest_scope_invalid")
     if payload.get("port_membership_exported") is not False:
         reasons.append("port_membership_exported")
     if payload.get("vlan_names_exported") is not False:
