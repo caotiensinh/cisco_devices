@@ -15,6 +15,7 @@ from typing import Any
 
 
 CANDIDATE_REVIEW_PATH = "knowledge/cbs250/r0_candidate_review_3.5.3.3.json"
+SUPPORTED_REVIEW_SCHEMAS = frozenset({1, 2})
 READY_STATUS = "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION"
 INGESTED_STATUS = "INGESTED_UNVERIFIED"
 
@@ -92,7 +93,7 @@ def _load_review_payload(path: str | Path = CANDIDATE_REVIEW_PATH) -> dict[str, 
     except (OSError, json.JSONDecodeError) as exc:
         raise R0EvidenceError(f"Cannot load R0 candidate review {review_path}: {exc}") from exc
 
-    if payload.get("schema_version") != 1:
+    if payload.get("schema_version") not in SUPPORTED_REVIEW_SCHEMAS:
         raise R0EvidenceError("Unsupported R0 candidate review schema_version")
     authority = payload.get("authority", {})
     if authority.get("device_write_authority") is not False:
@@ -154,11 +155,8 @@ def ingest_external_r0_output(
 
     The caller-supplied output is not independently proven live by this offline function.
     Therefore every record remains ``INGESTED_UNVERIFIED`` and cannot grant execution or
-    allowlist authority. Commands on HOLD are rejected until their candidate review changes.
-
-    ``raw_text_sha256`` fingerprints the text exactly as supplied to this function after UTF-8
-    encoding. ``canonical_text_sha256`` normalizes CRLF/CR line endings to LF so independently
-    exported Windows/Unix text can also be compared without losing the exact supplied digest.
+    allowlist authority. Commands on HOLD or already promoted are rejected because this
+    function is only for candidates still awaiting controlled live validation.
     """
     payload = _load_review_payload(review_path)
     target = payload.get("target", {})
