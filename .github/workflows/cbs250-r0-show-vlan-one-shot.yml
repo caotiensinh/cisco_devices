@@ -1,19 +1,19 @@
-name: CBS250 R0 Show VLAN One Shot
+name: CBS250 R0 Interface Status One Shot
 
 on:
   push:
     branches:
-      - live-test/r0-show-vlan-once-20260827
+      - live-test/r0-interface-status-once-20260827
 
 permissions:
   contents: read
 
 concurrency:
-  group: cbs250-r0-show-vlan-one-shot
+  group: cbs250-r0-interface-status-one-shot
   cancel-in-progress: false
 
 jobs:
-  r0-show-vlan:
+  r0-interface-status:
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 20
     env:
@@ -48,9 +48,9 @@ jobs:
       - name: Create isolated test environment
         shell: cmd
         run: |
-          if exist "%RUNNER_TEMP%\cbs250-r0-vlan-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
-          "%PYTHON_BASE%" -m venv "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
-          set "TEST_PY=%RUNNER_TEMP%\cbs250-r0-vlan-venv\Scripts\python.exe"
+          if exist "%RUNNER_TEMP%\cbs250-r0-interface-status-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-interface-status-venv"
+          "%PYTHON_BASE%" -m venv "%RUNNER_TEMP%\cbs250-r0-interface-status-venv"
+          set "TEST_PY=%RUNNER_TEMP%\cbs250-r0-interface-status-venv\Scripts\python.exe"
           echo ::add-mask::%TEST_PY%
           echo TEST_PY=%TEST_PY%>>"%GITHUB_ENV%"
           "%TEST_PY%" -m pip install --disable-pip-version-check -r requirements.txt
@@ -62,6 +62,7 @@ jobs:
           "%TEST_PY%" .\cbs250_targeted_help_probe.py --policy-check
           "%TEST_PY%" .\cbs250_l3_selector_help_probe.py --policy-check
           "%TEST_PY%" .\cbs250_r0_vlan_validation.py --policy-check
+          "%TEST_PY%" .\cbs250_r0_interface_status_validation.py --policy-check
           "%TEST_PY%" -m pytest -q
 
       - name: Enforce no-write authority before live validation
@@ -69,18 +70,23 @@ jobs:
         run: |
           "%TEST_PY%" -c "import json; d=json.load(open(r'governance\project_scope.json', encoding='utf-8')); assert d['global_device_write_authority'] is False; assert d['production_network_write_authority'] is False; print('PASS - all write authority remains disabled.')"
 
-      - name: Run exact show vlan validation only
+      - name: Run exact aggregate interface status validation only
         shell: cmd
         run: |
-          if exist "%RUNNER_TEMP%\cbs250-r0-show-vlan" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-show-vlan"
-          mkdir "%RUNNER_TEMP%\cbs250-r0-show-vlan"
-          "%TEST_PY%" .\cbs250_r0_vlan_validation.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output "%RUNNER_TEMP%\cbs250-r0-show-vlan\show_vlan_validation.sanitized.json"
+          if exist "%RUNNER_TEMP%\cbs250-r0-interface-status" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-interface-status"
+          mkdir "%RUNNER_TEMP%\cbs250-r0-interface-status"
+          "%TEST_PY%" .\cbs250_r0_interface_status_validation.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output "%RUNNER_TEMP%\cbs250-r0-interface-status\interface_status_validation.sanitized.json"
+
+      - name: Validate sanitized evidence contract
+        shell: cmd
+        run: |
+          "%TEST_PY%" -c "import json,re; p=json.load(open(r'%RUNNER_TEMP%\cbs250-r0-interface-status\interface_status_validation.sanitized.json',encoding='utf-8')); assert p['schema_version']==2; assert p['status']=='PASS_LIVE_PARSER_VALIDATED'; assert p['target']=={'product_id':'CBS250-24T-4X','firmware_version':'3.5.3.3'}; assert p['command']=='show interfaces status'; assert p['raw_output_retained'] is False; assert p['interface_ids_exported'] is False; assert p['media_details_exported'] is False; assert p['speed_details_exported'] is False; assert p['port_membership_exported'] is False; assert p['parsed_physical_row_count']>0; assert re.fullmatch(r'sha256:[0-9a-f]{64}',p['normalized_output_sha256']); assert p['authority']['device_write_authority'] is False; assert p['authority']['production_network_write_authority'] is False; assert p['authority']['collector_execution_authority'] is False; assert p['safety']['configuration_changed'] is False; assert p['safety']['reboot_or_reload_performed'] is False; assert p['safety']['specific_interface_command_executed'] is False; assert p['safety']['interface_state_changed'] is False; assert p['safety']['pager_navigation_sent'] is False; print('PASS - sanitized interface-status evidence contract')"
 
       - name: Upload sanitized validation only
         uses: actions/upload-artifact@v4
         with:
-          name: cbs250-r0-show-vlan-sanitized
-          path: ${{ runner.temp }}/cbs250-r0-show-vlan/show_vlan_validation.sanitized.json
+          name: cbs250-r0-interface-status-schema-v2-sanitized
+          path: ${{ runner.temp }}/cbs250-r0-interface-status/interface_status_validation.sanitized.json
           if-no-files-found: error
           retention-days: 7
 
@@ -88,5 +94,5 @@ jobs:
         if: always()
         shell: cmd
         run: |
-          if exist "%RUNNER_TEMP%\cbs250-r0-show-vlan" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-show-vlan"
-          if exist "%RUNNER_TEMP%\cbs250-r0-vlan-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-vlan-venv"
+          if exist "%RUNNER_TEMP%\cbs250-r0-interface-status" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-interface-status"
+          if exist "%RUNNER_TEMP%\cbs250-r0-interface-status-venv" rmdir /s /q "%RUNNER_TEMP%\cbs250-r0-interface-status-venv"
