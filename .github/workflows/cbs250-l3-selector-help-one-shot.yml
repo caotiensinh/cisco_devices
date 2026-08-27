@@ -1,16 +1,16 @@
-name: CBS250 R0 Show VLAN via Registered One Shot
+name: CBS250 R0 Show VLAN Schema V2 One Shot
 
 on:
   push:
     branches:
-      - live-test/l3-selector-help-once-20260826
+      - live-test/r0-show-vlan-v2-once-20260827
 
 permissions:
   contents: read
 
 concurrency:
   group: cbs250-r0-show-vlan-registered-one-shot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   r0-show-vlan:
@@ -76,10 +76,15 @@ jobs:
           mkdir "%RUNNER_TEMP%\cbs250-r0-show-vlan"
           "%TEST_PY%" .\cbs250_r0_vlan_validation.py --host "%CBS_HOST%" --username "%CBS_USERNAME%" --password-env CBS_PASSWORD --output "%RUNNER_TEMP%\cbs250-r0-show-vlan\show_vlan_validation.sanitized.json"
 
+      - name: Enforce schema v2 promotion-review evidence contract
+        shell: cmd
+        run: |
+          "%TEST_PY%" -c "import json; from cisco_assistant.r0_validation_promotion import evaluate_r0_validation_evidence; p=json.load(open(r'%RUNNER_TEMP%\cbs250-r0-show-vlan\show_vlan_validation.sanitized.json', encoding='utf-8')); d=evaluate_r0_validation_evidence(p); assert d.eligible_for_promotion_review, d.reasons; print('PASS - sanitized evidence is structurally eligible for separate promotion review; collector promotion is NOT granted.')"
+
       - name: Upload sanitized validation only
         uses: actions/upload-artifact@v4
         with:
-          name: cbs250-r0-show-vlan-sanitized
+          name: cbs250-r0-show-vlan-schema-v2-sanitized
           path: ${{ runner.temp }}/cbs250-r0-show-vlan/show_vlan_validation.sanitized.json
           if-no-files-found: error
           retention-days: 7
