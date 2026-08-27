@@ -15,9 +15,7 @@ def load(path):
 
 
 def test_live_validation_plan_grants_no_execution_or_write_authority():
-    plan = load(PLAN_PATH)
-    authority = plan["authority"]
-
+    authority = load(PLAN_PATH)["authority"]
     assert authority["device_write_authority"] is False
     assert authority["production_network_write_authority"] is False
     assert authority["candidate_execution_authority"] is False
@@ -25,27 +23,25 @@ def test_live_validation_plan_grants_no_execution_or_write_authority():
     assert authority["allowlist_expansion_authority"] is False
 
 
-def test_priority_candidates_exist_in_review_but_are_not_executable_yet():
+def test_vlan_completed_and_current_priority_candidates_pending():
     plan = load(PLAN_PATH)
     review = load(CANDIDATES_PATH)
     reviewed = {item["command"]: item for item in review["candidates"]}
+    completed = {item["command"]: item for item in plan["completed_validations"]}
 
-    assert plan["priority_order"] == [
-        "show vlan",
-        "show interfaces status",
-        "show interfaces switchport",
-    ]
+    assert completed["show vlan"]["status"] == "PROMOTED_TO_EXACT_TARGET_READ_ONLY_COLLECTOR"
+    assert reviewed["show vlan"]["review_status"] == "PROMOTED_TO_EXACT_TARGET_READ_ONLY_COLLECTOR"
+    assert "show vlan" in READ_ONLY_EXEC_ALLOWLIST
 
+    assert plan["priority_order"] == ["show interfaces status", "show interfaces switchport"]
     for command in plan["priority_order"]:
-        assert command in reviewed
         assert reviewed[command]["review_status"] == "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION"
         assert command not in READ_ONLY_EXEC_ALLOWLIST
 
 
-def test_priority_entries_explicitly_lack_live_execution_and_parser_regression():
+def test_pending_priority_entries_still_require_live_output_and_regression():
     plan = load(PLAN_PATH)
     entries = {entry["command"]: entry for entry in plan["validations"]}
-
     assert set(entries) == set(plan["priority_order"])
     for command in plan["priority_order"]:
         entry = entries[command]
@@ -55,32 +51,26 @@ def test_priority_entries_explicitly_lack_live_execution_and_parser_regression()
         assert entry["current_evidence"]["exact_live_parser_regression"] is False
         assert entry["status"] == "BLOCKED_MISSING_LIVE_EXECUTION_OUTPUT"
         assert entry["required_capture"]["repository_raw_output_allowed"] is False
-        assert entry["required_capture"]["expected_metadata_status"] == "INGESTED_UNVERIFIED"
 
 
-def test_documented_parser_record_cannot_be_misread_as_live_validation():
+def test_documented_format_registry_is_partial_after_vlan_validation():
     formats = load(FORMATS_PATH)
     authority = formats["authority"]
-
     assert authority["execution_authority"] is False
     assert authority["parser_promotion_authority"] is False
     assert authority["documented_examples_are_live_evidence"] is False
-    assert formats["source_scope"]["exact_live_output_validation_status"] == "PENDING"
+    assert formats["source_scope"]["exact_live_output_validation_status"] == "PARTIAL"
 
-    parser_entries = {entry["command"]: entry for entry in formats["parsers"]}
-    for command in ("show vlan", "show interfaces status", "show interfaces switchport"):
-        assert parser_entries[command]["documented_format_status"] == (
-            "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS"
-        )
-        assert parser_entries[command]["exact_live_3_5_3_3_status"] == (
-            "PENDING_CAPTURE_AND_REGRESSION"
-        )
+    parsers = {entry["command"]: entry for entry in formats["parsers"]}
+    assert parsers["show vlan"]["exact_live_3_5_3_3_status"] == "VALIDATED_EXACT_LIVE_AND_REGRESSION_PASS"
+    for command in ("show interfaces status", "show interfaces switchport"):
+        assert parsers[command]["documented_format_status"] == "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS"
+        assert parsers[command]["exact_live_3_5_3_3_status"] == "PENDING_CAPTURE_AND_REGRESSION"
 
 
 def test_explicit_holds_remain_non_promotable():
     plan = load(PLAN_PATH)
     holds = {entry["command"]: entry["status"] for entry in plan["explicit_holds"]}
-
     assert holds["show running-config brief"] == "HOLD_SENSITIVE_OUTPUT_REVIEW"
     assert holds["show lacp"] == "HOLD_REQUIRES_SELECTOR"
     assert "show running-config brief" not in READ_ONLY_EXEC_ALLOWLIST
