@@ -1,24 +1,29 @@
 {
-  "schema_version": 1,
-  "diff_id": "cbs250-24t-4x-3.5.3.3-planner-critical-diff-v1",
+  "schema_version": 2,
+  "diff_id": "cbs250-24t-4x-3.5.3.3-planner-critical-diff-v2",
   "scope": {
     "product_id": "CBS250-24T-4X",
     "firmware_version": "3.5.3.3",
     "coverage": "PLANNER_CRITICAL_SUBSET",
     "complete_family_capability_diff": false,
-    "live_dataset_coverage": "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP"
+    "live_dataset_coverage": "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP_PLUS_R0_LIVE_OUTPUT"
   },
   "authority": {
     "device_write_authority": false,
     "execution_authority": false,
     "documented_support_grants_execution_authority": false,
-    "missing_live_help_proves_unsupported": false
+    "missing_live_help_proves_unsupported": false,
+    "record_itself_grants_collector_authority": false,
+    "collector_authority_source": "cbs250_safety.READ_ONLY_EXEC_ALLOWLIST"
   },
   "sources": {
     "live_grammar": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
     "targeted_l3_help_diagnostic": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260826_l3_help_diagnostic.json",
+    "show_vlan_live_validation": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+    "collector_registry": "knowledge/cbs250/read_only_collector_registry.json",
     "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
     "documented_formats": "knowledge/cbs250/documented_output_formats.json",
+    "cisco_vlan_commands": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/vlan-commands.html",
     "cisco_ip_addressing": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/ip-addressing-commands.html",
     "cisco_ip_routing": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/ip-routing-protocol-independent-commands.html"
   },
@@ -48,10 +53,12 @@
       "collector_command": "show vlan",
       "documentation_state": "DOCUMENTED",
       "live_help_state": "OBSERVED_TERMINAL_CR",
-      "live_execution_state": "MISSING",
-      "parser_state": "DOCUMENTED_FORMAT_ONLY",
-      "planner_state": "BLOCKED_MISSING_EXACT_LIVE_OUTPUT",
-      "note": "Priority R0 validation candidate; not in executable allowlist."
+      "live_execution_state": "OBSERVED_AND_CURRENTLY_ALLOWLISTED",
+      "parser_state": "EXACT_LIVE_3_5_3_3_VALIDATED",
+      "planner_state": "READ_ONLY_COLLECTOR_APPROVED_PARTIAL_SCOPE",
+      "exact_target_gate": "CBS250-24T-4X/3.5.3.3",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+      "note": "Controlled R0 live output and parser regression passed. Collector execution is exact-product/firmware gated and current planner basis remains observed_partial because port/L3 scope is incomplete."
     },
     {
       "capability": "physical_interface_status",
@@ -115,11 +122,10 @@
     }
   ],
   "next_evidence_priority": [
-    "show vlan",
     "show interfaces status",
     "show interfaces switchport",
     "safe selector-level context-help expansion for show ip interface",
     "safe selector-level context-help expansion for show ip route"
   ],
-  "completion_note": "This is a planner-critical subset only. It must not be used to claim the complete documented-vs-observed CBS250 family capability diff is finished."
+  "completion_note": "This remains a planner-critical subset only. The successful show vlan promotion does not make port/L3/management scope complete and must not be used to claim the complete documented-vs-observed CBS250 family capability diff is finished."
 }
