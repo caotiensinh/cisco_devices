@@ -13,7 +13,6 @@ concurrency:
 
 jobs:
   governance-safety:
-    # Selector-level L3 help remains fail-closed and help-only.
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -38,8 +37,11 @@ jobs:
       - name: Validate selector-level L3 help policy
         run: python cbs250_l3_selector_help_probe.py --policy-check
 
-      - name: Validate isolated show vlan R0 policy
+      - name: Validate retired show vlan authority
         run: python cbs250_r0_vlan_validation.py --policy-check
+
+      - name: Validate isolated interfaces status R0 policy
+        run: python cbs250_r0_interface_status_validation.py --policy-check
 
       - name: Run governance and safety tests
         run: python -m pytest -q
