@@ -15,7 +15,7 @@ def load_registry():
 
 def test_registry_exists_and_grants_no_write_authority():
     registry = load_registry()
-    assert registry["schema_version"] == 1
+    assert registry["schema_version"] == 2
     assert registry["authority"]["device_write_authority"] is False
     assert registry["authority"]["execution_class"] == "R0_ONLY"
     assert registry["authority"]["discovered_commands_are_authority"] is False
@@ -25,10 +25,8 @@ def test_registry_exists_and_grants_no_write_authority():
 def test_automated_collector_commands_have_registry_and_safety_approval():
     registry = load_registry()
     entries = {entry["command"]: entry for entry in registry["commands"]}
-
     assert set(COLLECTOR_COMMANDS) == set(entries)
     assert set(COLLECTOR_COMMANDS).issubset(READ_ONLY_EXEC_ALLOWLIST)
-
     for command in COLLECTOR_COMMANDS:
         entry = entries[command]
         assert entry["automation_status"] == "approved"
@@ -40,7 +38,6 @@ def test_automated_collector_commands_have_registry_and_safety_approval():
 def test_registry_cannot_silently_expand_beyond_code_and_allowlist():
     registry = load_registry()
     registered = {entry["command"] for entry in registry["commands"]}
-
     assert registered == set(COLLECTOR_COMMANDS)
     assert registered.issubset(READ_ONLY_EXEC_ALLOWLIST)
-    assert len(registered) == 3
+    assert registered == {"show system", "show version", "show ip ssh", "show vlan"}
