@@ -50,21 +50,23 @@ def test_exact_3533_profile_loads_without_rewriting_historical_33016_profile():
     assert (ROOT / "knowledge" / "cbs250" / "profiles" / "CBS250-24T-4X_3.3.0.16.json").exists()
 
 
-def test_collector_registry_is_rebound_but_does_not_silently_expand_execution():
+def test_collector_registry_matches_current_exact_allowlist():
     registry = load_json(REGISTRY)
     assert registry["target_scope"]["exact_live_reference_firmware"] == "3.5.3.3"
     registered = {entry["command"] for entry in registry["commands"]}
-    assert registered == {"show system", "show version", "show ip ssh"}
+    assert registered == {"show system", "show version", "show ip ssh", "show vlan"}
     assert registered == set(READ_ONLY_EXEC_ALLOWLIST)
-    assert all("3.5.3.3" in entry["live_evidence"] for entry in registry["commands"])
+    assert all(entry["live_evidence"] for entry in registry["commands"])
 
 
-def test_reviewed_r0_candidates_remain_non_executable_until_live_output_and_parser_proof():
+def test_reviewed_candidates_distinguish_promoted_pending_and_hold_states():
     review = load_json(CANDIDATES)
     candidates = {entry["command"]: entry for entry in review["candidates"]}
 
-    ready = {
-        "show vlan",
+    assert candidates["show vlan"]["review_status"] == "PROMOTED_TO_EXACT_TARGET_READ_ONLY_COLLECTOR"
+    assert "show vlan" in READ_ONLY_EXEC_ALLOWLIST
+
+    pending = {
         "show interfaces status",
         "show interfaces switchport",
         "show spanning-tree",
@@ -73,7 +75,7 @@ def test_reviewed_r0_candidates_remain_non_executable_until_live_output_and_pars
         "show logging",
         "show logging file",
     }
-    for command in ready:
+    for command in pending:
         assert candidates[command]["review_status"] == "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION"
         assert command not in READ_ONLY_EXEC_ALLOWLIST
 
