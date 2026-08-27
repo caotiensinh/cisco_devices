@@ -2,7 +2,7 @@
 
 IMPORTANT: these parsers are DOCUMENTED_FORMAT_ONLY. They are not evidence that the exact
 CBS250-24T-4X / 3.5.3.3 live output has been validated, and they are intentionally not wired
-into the automated collector. Promotion requires exact live fixtures and regression tests.
+into the automated collector. Promotion requires exact live evidence and regression tests.
 
 No network/device access and no command execution exists in this module.
 """
@@ -14,6 +14,9 @@ import re
 
 PARSER_AUTHORITY = "DOCUMENTED_FORMAT_ONLY"
 LIVE_VALIDATED = False
+
+VLAN_FORMAT_LEGACY = "LEGACY_PORTS_TYPE_AUTHORIZATION"
+VLAN_FORMAT_TAGGED_UNTAGGED = "TAGGED_UNTAGGED_CREATED_BY"
 
 
 class DocumentedParserError(ValueError):
@@ -27,6 +30,10 @@ class DocumentedVLANRow:
     ports: tuple[str, ...]
     vlan_type: str
     authorization: str
+    format_variant: str = VLAN_FORMAT_LEGACY
+    tagged_ports: tuple[str, ...] = ()
+    untagged_ports: tuple[str, ...] = ()
+    created_by: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,22 +81,98 @@ def _is_prompt_or_command_echo(line: str) -> bool:
     return False
 
 
-def parse_documented_show_vlan(text: str) -> tuple[DocumentedVLANRow, ...]:
-    """Parse the documented five-column ``show vlan`` table shape.
+def _parse_port_cell(value: str) -> tuple[str, ...]:
+    stripped = value.strip()
+    if not stripped or stripped.casefold() in {"none", "--", "-"}:
+        return ()
+    return tuple(
+        part.strip()
+        for part in stripped.split(",")
+        if part.strip() and part.strip().casefold() != "none"
+    )
 
-    The parser intentionally requires the recognizable VLAN/Name/Ports/Type/Authorization
-    header before accepting rows. It does not claim that missing rows represent device absence.
-    """
-    lines = _clean_lines(text)
-    header_index = None
-    for index, line in enumerate(lines):
-        lowered = line.casefold()
-        if all(word in lowered for word in ("vlan", "name", "ports", "type", "authorization")):
-            header_index = index
-            break
-    if header_index is None:
-        raise DocumentedParserError("show vlan documented header was not found")
 
+def _ordered_unique(*groups: tuple[str, ...]) -> tuple[str, ...]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        for item in group:
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+    return tuple(result)
+
+
+def _find_current_vlan_header(line: str) -> tuple[int, int, int, int, int] | None:
+    """Return fixed column starts for the current Cisco VLAN table shape."""
+    lowered = line.casefold()
+    labels = ("vlan", "name", "tagged ports", "untagged ports", "created by")
+    starts: list[int] = []
+    search_from = 0
+    for label in labels:
+        index = lowered.find(label, search_from)
+        if index < 0:
+            return None
+        starts.append(index)
+        search_from = index + len(label)
+    return tuple(starts)  # type: ignore[return-value]
+
+
+def _parse_current_vlan_rows(
+    lines: list[str],
+    header_index: int,
+    starts: tuple[int, int, int, int, int],
+) -> tuple[DocumentedVLANRow, ...]:
+    vlan_start, name_start, tagged_start, untagged_start, created_start = starts
+    rows: list[DocumentedVLANRow] = []
+
+    for line in lines[header_index + 1 :]:
+        stripped = line.strip()
+        if not stripped or set(stripped) <= {"-", " ", "|"}:
+            continue
+        if _is_prompt_or_command_echo(line):
+            continue
+
+        vlan_cell = line[vlan_start:name_start].strip()
+        if not re.fullmatch(r"\d{1,4}", vlan_cell):
+            # Wrapped port-list continuation lines intentionally do not become new rows.
+            continue
+
+        vlan_id = int(vlan_cell)
+        if not 1 <= vlan_id <= 4094:
+            raise DocumentedParserError(f"Parsed VLAN ID outside valid range: {vlan_id}")
+
+        name = line[name_start:tagged_start].strip()
+        tagged = _parse_port_cell(line[tagged_start:untagged_start])
+        untagged = _parse_port_cell(line[untagged_start:created_start])
+        created_by = line[created_start:].strip()
+        if not name:
+            raise DocumentedParserError(f"Current-format VLAN {vlan_id} has an empty name")
+        if not created_by:
+            raise DocumentedParserError(f"Current-format VLAN {vlan_id} has no Created by value")
+
+        rows.append(
+            DocumentedVLANRow(
+                vlan_id=vlan_id,
+                name=name,
+                ports=_ordered_unique(tagged, untagged),
+                vlan_type="",
+                authorization="",
+                format_variant=VLAN_FORMAT_TAGGED_UNTAGGED,
+                tagged_ports=tagged,
+                untagged_ports=untagged,
+                created_by=created_by,
+            )
+        )
+
+    if not rows:
+        raise DocumentedParserError(
+            "show vlan current documented header was found but no current-format rows parsed"
+        )
+    return tuple(rows)
+
+
+def _parse_legacy_vlan_rows(lines: list[str], header_index: int) -> tuple[DocumentedVLANRow, ...]:
     rows: list[DocumentedVLANRow] = []
     row_re = re.compile(
         r"^\s*(?P<vlan>\d{1,4})\s+"
@@ -110,8 +193,7 @@ def parse_documented_show_vlan(text: str) -> tuple[DocumentedVLANRow, ...]:
         vlan_id = int(match.group("vlan"))
         if not 1 <= vlan_id <= 4094:
             raise DocumentedParserError(f"Parsed VLAN ID outside valid range: {vlan_id}")
-        ports_text = match.group("ports")
-        ports = tuple(part for part in ports_text.split(",") if part and part.casefold() != "none")
+        ports = _parse_port_cell(match.group("ports"))
         rows.append(
             DocumentedVLANRow(
                 vlan_id=vlan_id,
@@ -119,11 +201,40 @@ def parse_documented_show_vlan(text: str) -> tuple[DocumentedVLANRow, ...]:
                 ports=ports,
                 vlan_type=match.group("type"),
                 authorization=match.group("authorization").strip(),
+                format_variant=VLAN_FORMAT_LEGACY,
             )
         )
     if not rows:
-        raise DocumentedParserError("show vlan header was found but no documented-format rows parsed")
+        raise DocumentedParserError(
+            "show vlan legacy documented header was found but no legacy-format rows parsed"
+        )
     return tuple(rows)
+
+
+def parse_documented_show_vlan(text: str) -> tuple[DocumentedVLANRow, ...]:
+    """Parse either Cisco-documented ``show vlan`` table shape.
+
+    Supported documented variants are:
+    - legacy: VLAN / Name / Ports / Type / Authorization
+    - current: VLAN / Name / Tagged Ports / UnTagged Ports / Created by
+
+    Header recognition is mandatory. For the current format, fixed column starts are derived
+    from the header so empty Tagged/UnTagged cells are preserved instead of being shifted by
+    whitespace splitting. Missing rows never imply device absence.
+    """
+    lines = _clean_lines(text)
+
+    for index, line in enumerate(lines):
+        starts = _find_current_vlan_header(line)
+        if starts is not None:
+            return _parse_current_vlan_rows(lines, index, starts)
+
+    for index, line in enumerate(lines):
+        lowered = line.casefold()
+        if all(word in lowered for word in ("vlan", "name", "ports", "type", "authorization")):
+            return _parse_legacy_vlan_rows(lines, index)
+
+    raise DocumentedParserError("show vlan documented header was not found")
 
 
 def parse_documented_show_interfaces_status(
