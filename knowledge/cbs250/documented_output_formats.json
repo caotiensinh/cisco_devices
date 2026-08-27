@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "record_id": "cbs250-documented-output-formats-v1",
+  "schema_version": 2,
+  "record_id": "cbs250-documented-output-formats-v2",
   "authority": {
     "device_write_authority": false,
     "execution_authority": false,
@@ -13,23 +13,52 @@
     "official_cli_guide_updated": "2025-02-28",
     "exact_live_reference_product": "CBS250-24T-4X",
     "exact_live_reference_firmware": "3.5.3.3",
-    "exact_live_output_validation_status": "PENDING"
+    "exact_live_output_validation_status": "PARTIAL",
+    "validated_commands": [
+      "show vlan"
+    ],
+    "pending_commands": [
+      "show interfaces status",
+      "show interfaces switchport"
+    ]
   },
   "parsers": [
     {
       "command": "show vlan",
       "implementation": "cisco_assistant.documented_output_parsers.parse_documented_show_vlan",
-      "documented_format_status": "IMPLEMENTED_WITH_SYNTHETIC_FIXTURE_TESTS",
-      "exact_live_3_5_3_3_status": "PENDING_CAPTURE_AND_REGRESSION",
-      "documented_fields": [
-        "Vlan",
-        "Name",
-        "Ports",
-        "Type",
-        "Authorization"
+      "documented_format_status": "IMPLEMENTED_WITH_LEGACY_AND_CURRENT_SYNTHETIC_FIXTURE_TESTS",
+      "exact_live_3_5_3_3_status": "VALIDATED_EXACT_LIVE_AND_REGRESSION_PASS",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+      "supported_documented_variants": [
+        {
+          "variant": "LEGACY_PORTS_TYPE_AUTHORIZATION",
+          "fields": [
+            "VLAN",
+            "Name",
+            "Ports",
+            "Type",
+            "Authorization"
+          ]
+        },
+        {
+          "variant": "TAGGED_UNTAGGED_CREATED_BY",
+          "fields": [
+            "VLAN",
+            "Name",
+            "Tagged Ports",
+            "UnTagged Ports",
+            "Created by"
+          ]
+        }
       ],
-      "official_source": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/user-interface-commands.html",
-      "note": "Cisco documents a show vlan table example. The repository parser remains documented-format-only until exact 3.5.3.3 output is captured and independently reviewed."
+      "official_source": "https://www.cisco.com/c/en/us/td/docs/switches/lan/csbms/CBS_250_350/CLI/cbs-250-cli/vlan-commands.html",
+      "safe_export": {
+        "vlan_ids": true,
+        "vlan_names": false,
+        "port_membership": false,
+        "raw_output": false
+      },
+      "note": "Exact CBS250-24T-4X / 3.5.3.3 controlled live output passed the current documented-format parser and schema-v2 sanitized evidence gate. This parser record itself grants no execution authority."
     },
     {
       "command": "show interfaces status",
@@ -70,11 +99,12 @@
   ],
   "promotion_gate": [
     "controlled exact-target live output",
-    "digest-only evidence ingestion",
+    "sanitized digest evidence",
     "sensitivity review",
-    "exact-live parser fixture",
+    "exact-live parser regression",
     "negative and regression tests",
     "collector registry approval",
-    "exact read-only allowlist approval"
+    "exact read-only allowlist approval",
+    "exact-target preexecution gate when promotion evidence is firmware-bound"
   ]
 }
