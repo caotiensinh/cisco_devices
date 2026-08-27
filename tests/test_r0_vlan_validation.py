@@ -8,23 +8,26 @@ import cbs250_r0_vlan_validation as validation
 from cbs250_safety import (
     HARD_DENY_EXEC_ROOTS,
     READ_ONLY_EXEC_ALLOWLIST,
+    READ_ONLY_PROMOTION_EVIDENCE,
     R0_VALIDATION_EXEC_ALLOWLIST,
     SafetyViolation,
     assert_r0_validation_executable,
 )
 
 
-def test_validation_allowlist_is_exactly_show_vlan_and_separate_from_collectors() -> None:
-    validation.validate_static_policy()
+def test_show_vlan_authority_was_transferred_to_collector_only() -> None:
+    assert validation.validate_static_policy() == "PROMOTED_TO_COLLECTOR"
     assert validation.VALIDATION_COMMAND == "show vlan"
-    assert R0_VALIDATION_EXEC_ALLOWLIST == frozenset({"show vlan"})
-    assert "show vlan" not in READ_ONLY_EXEC_ALLOWLIST
-    assert READ_ONLY_EXEC_ALLOWLIST == frozenset({"show system", "show version", "show ip ssh"})
+    assert R0_VALIDATION_EXEC_ALLOWLIST == frozenset()
+    assert READ_ONLY_EXEC_ALLOWLIST == frozenset(
+        {"show system", "show version", "show ip ssh", "show vlan"}
+    )
+    assert READ_ONLY_PROMOTION_EVIDENCE["show vlan"] == validation.PROMOTION_EVIDENCE_PATH
 
 
-def test_validation_gate_rejects_every_other_candidate_or_mutation() -> None:
-    assert assert_r0_validation_executable(" show   vlan ") == "show vlan"
+def test_retired_validation_gate_cannot_execute_promoted_show_vlan_or_any_other_candidate() -> None:
     for command in (
+        "show vlan",
         "show interfaces status",
         "show ip route",
         "show vlan 10",
@@ -42,7 +45,7 @@ def test_validation_command_root_is_read_only_and_not_hard_denied() -> None:
     assert validation.VALIDATION_COMMAND.split()[0] not in HARD_DENY_EXEC_ROOTS
 
 
-def test_sanitized_live_result_does_not_export_names_or_port_membership() -> None:
+def test_historical_sanitized_result_does_not_export_names_or_port_membership() -> None:
     sample = """
 Vlan       Name           Ports          Type      Authorization
 ---------  -------------  -------------  --------  -------------
@@ -71,7 +74,7 @@ Vlan       Name           Ports          Type      Authorization
     assert result["authority"]["validation_only_execution_authority"] is True
 
 
-def test_normalized_digest_is_stable_for_same_cleaned_text() -> None:
+def test_historical_normalized_digest_is_stable_for_same_cleaned_text() -> None:
     sample = """
 Vlan       Name           Ports          Type      Authorization
 ---------  -------------  -------------  --------  -------------
@@ -83,9 +86,13 @@ Vlan       Name           Ports          Type      Authorization
     assert first["normalized_output_sha256"] == second["normalized_output_sha256"]
 
 
-def test_parser_failure_blocks_validation_result() -> None:
+def test_historical_parser_failure_blocks_validation_record() -> None:
     with pytest.raises(validation.VLANValidationError, match="parser validation failed"):
         validation.build_sanitized_result(
             {"product_id": "CBS250-24T-4X", "firmware_version": "3.5.3.3"},
             "not a vlan table",
         )
+
+
+def test_retired_main_path_is_policy_check_only() -> None:
+    assert validation.main.__module__ == "cbs250_r0_vlan_validation"
