@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "review_id": "cbs250-r0-candidates-3.5.3.3-20260825",
+  "schema_version": 2,
+  "review_id": "cbs250-r0-candidates-3.5.3.3-20260827",
   "target": {
     "product_id": "CBS250-24T-4X",
     "firmware": "3.5.3.3"
@@ -11,17 +11,25 @@
     "candidate_review_grants_execution_authority": false,
     "promotion_requires_live_execution_output": true,
     "promotion_requires_parser_tests": true,
-    "promotion_requires_exact_allowlist_update": true
+    "promotion_requires_exact_allowlist_update": true,
+    "promotion_requires_exact_target_preexecution_gate": true
   },
   "candidates": [
     {
       "command": "show vlan",
       "risk_class": "R0",
       "help_terminal_cr_observed": true,
-      "review_status": "READY_FOR_CONTROLLED_LIVE_READ_VALIDATION",
-      "expected_use": "VLAN inventory and membership foundation",
-      "evidence_sensitivity": "LOW",
-      "reason": "Exact live help exposes display-only VLAN variants and a terminal <CR>. No write semantics are exposed by this command form. Output has not yet been captured and parsed by the collector."
+      "review_status": "PROMOTED_TO_EXACT_TARGET_READ_ONLY_COLLECTOR",
+      "expected_use": "VLAN inventory foundation",
+      "evidence_sensitivity": "LOW_WITH_SANITIZED_EXPORT",
+      "live_validation_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+      "collector_registry": "knowledge/cbs250/read_only_collector_registry.json",
+      "execution_binding": {
+        "product_id": "CBS250-24T-4X",
+        "firmware": "3.5.3.3",
+        "mismatch_behavior": "BLOCK_BEFORE_COMMAND_EXECUTION"
+      },
+      "reason": "Exact live help exposed terminal <CR>; controlled R0 live execution then passed the exact-live parser and schema-v2 sanitized evidence gate. VLAN names, port membership, raw terminal output and credentials are not exported. Collector promotion was performed separately through the safety allowlist and registry after review."
     },
     {
       "command": "show interfaces status",
@@ -105,5 +113,5 @@
       "reason": "The exact live help for bare show lacp did not expose terminal <CR>; it requires a port-channel or interface selector. A deterministic selector strategy must be derived from observed interfaces before automation."
     }
   ],
-  "promotion_rule": "Only entries with controlled live output, stable parser fixtures, secret-hygiene review, and exact-target regression tests may be copied into read_only_collector_registry.json and cbs250_safety.READ_ONLY_EXEC_ALLOWLIST."
+  "promotion_rule": "Only entries with controlled exact-target live output, stable parser fixtures, secret-hygiene review, exact-target preexecution gating where evidence is firmware-bound, regression tests, collector registry approval, and cbs250_safety allowlist approval may become automated collectors. This review record itself grants no execution authority."
 }
