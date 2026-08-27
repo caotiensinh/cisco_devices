@@ -18,17 +18,18 @@ from cbs250_safety import (
 def test_show_vlan_authority_was_transferred_to_collector_only() -> None:
     assert validation.validate_static_policy() == "PROMOTED_TO_COLLECTOR"
     assert validation.VALIDATION_COMMAND == "show vlan"
-    assert R0_VALIDATION_EXEC_ALLOWLIST == frozenset()
+    assert "show vlan" not in R0_VALIDATION_EXEC_ALLOWLIST
     assert READ_ONLY_EXEC_ALLOWLIST == frozenset(
         {"show system", "show version", "show ip ssh", "show vlan"}
     )
     assert READ_ONLY_PROMOTION_EVIDENCE["show vlan"] == validation.PROMOTION_EVIDENCE_PATH
 
 
-def test_retired_validation_gate_cannot_execute_promoted_show_vlan_or_any_other_candidate() -> None:
+def test_retired_vlan_cannot_reenter_validation_only_authority() -> None:
+    with pytest.raises(SafetyViolation):
+        assert_r0_validation_executable("show vlan")
+    assert assert_r0_validation_executable("show interfaces status") == "show interfaces status"
     for command in (
-        "show vlan",
-        "show interfaces status",
         "show ip route",
         "show vlan 10",
         "configure terminal",
