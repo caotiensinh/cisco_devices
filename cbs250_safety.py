@@ -1,7 +1,7 @@
 """Safety policy for CBS250 investigation-only discovery and reviewed R0 collection."""
 from __future__ import annotations
 
-VERSION = "3.2.0"
+VERSION = "3.2.1"
 
 
 class SafetyViolation(RuntimeError):
@@ -24,8 +24,10 @@ READ_ONLY_PROMOTION_EVIDENCE = {
 }
 
 # Narrow one-shot validation authority. It is intentionally disjoint from collector/runtime
-# authority. show vlan was removed after its successful exact-live promotion review.
-R0_VALIDATION_EXEC_ALLOWLIST = frozenset()
+# authority. Candidates remain here only while exact-live output/parser validation is pending.
+R0_VALIDATION_EXEC_ALLOWLIST = frozenset({
+    "show interfaces status",
+})
 
 # Absolute deny list for any generic command executor. Discovery code may only
 # *type* these words as part of a context-help query ending in '?' and must never
