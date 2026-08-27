@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "plan_id": "cbs250-24t-4x-3.5.3.3-r0-live-validation-v1",
+  "schema_version": 2,
+  "plan_id": "cbs250-24t-4x-3.5.3.3-r0-live-validation-v2",
   "target": {
     "vendor": "Cisco",
     "family": "CBS250",
@@ -13,50 +13,53 @@
     "candidate_execution_authority": false,
     "raw_cli_authority": false,
     "allowlist_expansion_authority": false,
-    "note": "This plan defines evidence requirements only. It does not authorize execution of candidate commands."
+    "note": "This plan records evidence requirements and outcomes only. It does not itself authorize candidate execution or collector promotion."
   },
   "source_records": {
     "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
     "documented_output_formats": "knowledge/cbs250/documented_output_formats.json",
     "live_grammar_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260825_v31.json",
+    "show_vlan_live_validation": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+    "collector_registry": "knowledge/cbs250/read_only_collector_registry.json",
     "exact_profile": "knowledge/cbs250/profiles/CBS250-24T-4X_3.5.3.3.json"
   },
+  "completed_validations": [
+    {
+      "command": "show vlan",
+      "goal": "Establish exact-live VLAN inventory output and parser compatibility.",
+      "status": "PROMOTED_TO_EXACT_TARGET_READ_ONLY_COLLECTOR",
+      "current_evidence": {
+        "exact_live_help_syntax": true,
+        "documented_output_format": true,
+        "exact_live_execution_output": true,
+        "exact_live_parser_regression": true,
+        "sanitized_schema_v2_evidence": true,
+        "collector_registry_approval": true,
+        "exact_allowlist_approval": true,
+        "exact_target_preexecution_gate": true
+      },
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+      "validated_run_id": 33030461151,
+      "validated_job_id": 98381565457,
+      "validated_head_sha": "3a660eff77fc372d602156b29598850ce05c03b0",
+      "validated_main_base_sha": "92482767d55167afc2ca8edd3f0a1749619ef4c0",
+      "safe_export": {
+        "raw_output": false,
+        "vlan_names": false,
+        "port_membership": false,
+        "vlan_ids": true
+      },
+      "note": "The validation plan did not grant execution authority. Promotion occurred separately after live evidence, parser regression, sensitivity review, safety allowlist update and collector-registry approval."
+    }
+  ],
   "priority_order": [
-    "show vlan",
     "show interfaces status",
     "show interfaces switchport"
   ],
   "validations": [
     {
-      "command": "show vlan",
-      "goal": "Establish exact-live VLAN inventory output and parser compatibility.",
-      "current_evidence": {
-        "exact_live_help_syntax": true,
-        "documented_output_format": true,
-        "exact_live_execution_output": false,
-        "exact_live_parser_regression": false
-      },
-      "required_capture": {
-        "target_must_match_exact_profile": true,
-        "raw_output_storage": "LOCAL_ONLY_BY_DEFAULT",
-        "repository_raw_output_allowed": false,
-        "digest_metadata_ingester": "cbs250_r0_evidence_ingest.py",
-        "expected_metadata_status": "INGESTED_UNVERIFIED"
-      },
-      "promotion_requirements": [
-        "controlled exact-target live capture",
-        "raw and canonical SHA-256 metadata",
-        "sensitivity review",
-        "exact-live parser fixture",
-        "parser regression PASS",
-        "collector registry approval",
-        "cbs250_safety exact allowlist approval"
-      ],
-      "status": "BLOCKED_MISSING_LIVE_EXECUTION_OUTPUT"
-    },
-    {
       "command": "show interfaces status",
-      "goal": "Establish exact-live physical interface presence/link/status output and parser compatibility.",
+      "goal": "Establish exact-live physical interface presence/link/status output and parser compatibility without modifying any port.",
       "current_evidence": {
         "exact_live_help_syntax": true,
         "documented_output_format": true,
@@ -67,12 +70,11 @@
         "target_must_match_exact_profile": true,
         "raw_output_storage": "LOCAL_ONLY_BY_DEFAULT",
         "repository_raw_output_allowed": false,
-        "digest_metadata_ingester": "cbs250_r0_evidence_ingest.py",
         "expected_metadata_status": "INGESTED_UNVERIFIED"
       },
       "promotion_requirements": [
         "controlled exact-target live capture",
-        "raw and canonical SHA-256 metadata",
+        "sanitized digest metadata",
         "sensitivity review",
         "exact-live physical-interface parser fixture",
         "separate decision for port-channel table shape",
@@ -84,7 +86,7 @@
     },
     {
       "command": "show interfaces switchport",
-      "goal": "Establish exact-live access/trunk/VLAN membership output and parser compatibility.",
+      "goal": "Establish exact-live access/trunk/VLAN membership output and parser compatibility without changing interface state.",
       "current_evidence": {
         "exact_live_help_syntax": true,
         "documented_output_format": true,
@@ -95,13 +97,12 @@
         "target_must_match_exact_profile": true,
         "raw_output_storage": "LOCAL_ONLY_BY_DEFAULT",
         "repository_raw_output_allowed": false,
-        "digest_metadata_ingester": "cbs250_r0_evidence_ingest.py",
         "expected_metadata_status": "INGESTED_UNVERIFIED",
         "sensitivity": "INTERNAL_NETWORK"
       },
       "promotion_requirements": [
         "controlled exact-target live capture",
-        "raw and canonical SHA-256 metadata",
+        "sanitized digest metadata",
         "internal-network sensitivity review",
         "exact-live parser fixture",
         "unknown firmware-specific fields reviewed",
@@ -149,5 +150,5 @@
       "status": "HOLD_REQUIRES_SELECTOR"
     }
   ],
-  "completion_rule": "No validation entry may become LIVE_VALIDATED or APPROVED unless its exact-target live output, digest metadata, sensitivity review, exact-live parser regression, registry approval and exact read-only allowlist approval all exist."
+  "completion_rule": "A pending validation may be closed only after exact-target live output, sanitized digest metadata, sensitivity review, exact-live parser regression, registry approval, exact read-only allowlist approval and any required exact-target preexecution gate all exist."
 }
