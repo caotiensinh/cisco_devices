@@ -1,8 +1,9 @@
 """CBS250 reviewed read-only inventory collectors and parsers.
 
 Collectors in this module can request only commands already approved by ``cbs250_safety``.
-The reviewed subset now includes exact-live validated VLAN inventory, but the combined state
-remains ``OBSERVED_PARTIAL`` until port/L3/management scope is separately reviewed.
+The reviewed subset now includes exact-live validated VLAN inventory for CBS250-24T-4X /
+3.5.3.3. Extended commands are withheld until baseline identity proves that exact target.
+The combined state remains ``OBSERVED_PARTIAL`` until port/L3/management scope is reviewed.
 """
 from __future__ import annotations
 
@@ -19,7 +20,11 @@ from .current_state import (
     CurrentStateBasis,
     CurrentVLANState,
 )
-from .documented_output_parsers import DocumentedParserError, parse_documented_show_vlan
+from .documented_output_parsers import (
+    DocumentedParserError,
+    DocumentedVLANRow,
+    parse_documented_show_vlan,
+)
 from .models import (
     CapabilityState,
     DeviceCapability,
@@ -30,12 +35,17 @@ from .read_only_transport import ReadOnlyCommandResult, ReadOnlySessionError
 
 
 COLLECTOR_SCHEMA_VERSION = 2
-COLLECTOR_COMMANDS = (
+SHOW_VLAN_PROMOTED_PRODUCT_ID = "CBS250-24T-4X"
+SHOW_VLAN_PROMOTED_FIRMWARE = "3.5.3.3"
+BASELINE_COLLECTOR_COMMANDS = (
     "show system",
     "show version",
     "show ip ssh",
+)
+EXACT_TARGET_COLLECTOR_COMMANDS = (
     "show vlan",
 )
+COLLECTOR_COMMANDS = BASELINE_COLLECTOR_COMMANDS + EXACT_TARGET_COLLECTOR_COMMANDS
 
 if not set(COLLECTOR_COMMANDS).issubset(READ_ONLY_EXEC_ALLOWLIST):
     raise RuntimeError("Collector command registry exceeds the exact read-only allowlist")
@@ -255,10 +265,39 @@ def parse_show_ip_ssh(text: str) -> SSHInventory:
     )
 
 
+def _collect_command(
+    executor: ReadOnlyCommandExecutor,
+    command: str,
+    outputs: dict[str, str],
+    succeeded: list[str],
+    errors: list[CollectorError],
+) -> None:
+    try:
+        result = executor.execute(command)
+        outputs[command] = result.output
+        succeeded.append(command)
+    except ReadOnlySessionError as exc:
+        errors.append(
+            CollectorError(
+                command=command,
+                code=exc.code.value,
+                message=str(exc),
+            )
+        )
+    except Exception as exc:
+        errors.append(
+            CollectorError(
+                command=command,
+                code="collector_execution_error",
+                message=f"Read-only collection failed: {type(exc).__name__}",
+            )
+        )
+
+
 def _parse_vlan_inventory(
     outputs: dict[str, str],
     errors: list[CollectorError],
-) -> tuple[object, ...]:
+) -> tuple[DocumentedVLANRow, ...]:
     if "show vlan" not in outputs:
         return ()
     try:
@@ -280,46 +319,48 @@ def collect_cbs250_inventory(
     source_revision: str,
     collected_at_utc: str | None = None,
 ) -> CBS250InventorySnapshot:
-    """Collect the currently reviewed R0 inventory subset.
+    """Collect the currently reviewed R0 inventory subset with exact-target gating.
 
-    VLAN identity is now exact-live validated and normalized. The function intentionally cannot
-    claim planner-scope completeness because port/L3/management collectors are not yet complete;
-    therefore observed state remains ``OBSERVED_PARTIAL`` and absence is not authoritative.
+    Baseline identity is collected first. ``show vlan`` is sent only when product and firmware
+    exactly match the live-validated promotion evidence. VLAN identity is normalized, but the
+    resulting planner basis remains ``OBSERVED_PARTIAL`` because port/L3/management collectors
+    are not yet complete and absence therefore remains non-authoritative.
     """
     timestamp = collected_at_utc or datetime.now(timezone.utc).isoformat()
     outputs: dict[str, str] = {}
     succeeded: list[str] = []
     errors: list[CollectorError] = []
 
-    for command in COLLECTOR_COMMANDS:
-        try:
-            result = executor.execute(command)
-            outputs[command] = result.output
-            succeeded.append(command)
-        except ReadOnlySessionError as exc:
-            errors.append(
-                CollectorError(
-                    command=command,
-                    code=exc.code.value,
-                    message=str(exc),
-                )
-            )
-        except Exception as exc:  # parser/orchestrator boundary: keep failure explicit
-            errors.append(
-                CollectorError(
-                    command=command,
-                    code="collector_execution_error",
-                    message=f"Read-only collection failed: {type(exc).__name__}",
-                )
-            )
+    for command in BASELINE_COLLECTOR_COMMANDS:
+        _collect_command(executor, command, outputs, succeeded, errors)
 
     system = parse_show_system(outputs.get("show system", ""))
     version = parse_show_version(outputs.get("show version", ""))
+    product_id = system.get("product_id")
+    firmware_version = version.get("firmware_version")
+
+    exact_vlan_target = (
+        product_id == SHOW_VLAN_PROMOTED_PRODUCT_ID
+        and firmware_version == SHOW_VLAN_PROMOTED_FIRMWARE
+    )
+    if exact_vlan_target:
+        for command in EXACT_TARGET_COLLECTOR_COMMANDS:
+            _collect_command(executor, command, outputs, succeeded, errors)
+    elif isinstance(product_id, str) and isinstance(firmware_version, str):
+        errors.append(
+            CollectorError(
+                command="show vlan",
+                code="exact_target_mismatch_blocked",
+                message=(
+                    "Promoted VLAN collection was withheld because exact product/firmware "
+                    "does not match the reviewed live-evidence binding"
+                ),
+            )
+        )
+
     ssh = parse_show_ip_ssh(outputs["show ip ssh"]) if "show ip ssh" in outputs else None
     vlan_rows = _parse_vlan_inventory(outputs, errors)
 
-    product_id = system.get("product_id")
-    firmware_version = version.get("firmware_version")
     fingerprint: DeviceFingerprint | None = None
     observed_state: ObservedState | None = None
     current_state: CurrentNetworkState | None = None
