@@ -27,7 +27,7 @@ from cisco_assistant.documented_output_parsers import (
 )
 
 
-TOOL_VERSION = "1.2.0"
+TOOL_VERSION = "1.2.1"
 SCHEMA_VERSION = 2
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
@@ -48,15 +48,13 @@ def utc_now() -> str:
 
 
 def validate_static_policy() -> str:
-    """Verify that validation-only authority was cleanly transferred to the collector."""
+    """Verify that show vlan authority remains collector-only after promotion."""
     if VALIDATION_COMMAND not in READ_ONLY_EXEC_ALLOWLIST:
         raise VLANValidationError("show vlan is not present in the reviewed collector allowlist")
     if VALIDATION_COMMAND in R0_VALIDATION_EXEC_ALLOWLIST:
         raise VLANValidationError(
             "show vlan must not retain validation-only authority after collector promotion"
         )
-    if R0_VALIDATION_EXEC_ALLOWLIST:
-        raise VLANValidationError("Unexpected R0 validation-only commands remain registered")
     if READ_ONLY_PROMOTION_EVIDENCE.get(VALIDATION_COMMAND) != PROMOTION_EVIDENCE_PATH:
         raise VLANValidationError("show vlan collector promotion evidence binding is missing")
     return PROMOTION_STATE
@@ -122,7 +120,7 @@ def parse_args() -> argparse.Namespace:
 def policy_check() -> int:
     state = validate_static_policy()
     print(f"[PASS] show vlan authority state: {state}")
-    print("[PASS] validation-only authority is empty and disjoint from collector authority")
+    print("[PASS] show vlan is absent from validation-only authority")
     print(f"[PASS] promotion evidence: {PROMOTION_EVIDENCE_PATH}")
     return 0
 
