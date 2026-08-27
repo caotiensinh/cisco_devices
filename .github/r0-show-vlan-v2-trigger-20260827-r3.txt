@@ -1,0 +1,2 @@
+Retrigger schema-v2 CBS250 R0 show vlan validation after current documented VLAN parser support and hosted Governance PASS.
+No device write authority is granted by this marker.
