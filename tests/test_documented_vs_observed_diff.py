@@ -5,12 +5,7 @@ from cbs250_safety import READ_ONLY_EXEC_ALLOWLIST
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DIFF_PATH = (
-    ROOT
-    / "knowledge"
-    / "cbs250"
-    / "documented_vs_observed_planner_diff_3.5.3.3.json"
-)
+DIFF_PATH = ROOT / "knowledge" / "cbs250" / "documented_vs_observed_planner_diff_3.5.3.3.json"
 
 
 def load_diff():
@@ -18,10 +13,7 @@ def load_diff():
 
 
 def entries_by_command():
-    return {
-        entry["collector_command"]: entry
-        for entry in load_diff()["states"]
-    }
+    return {entry["collector_command"]: entry for entry in load_diff()["states"]}
 
 
 def test_planner_diff_is_scoped_and_grants_no_authority():
@@ -29,7 +21,7 @@ def test_planner_diff_is_scoped_and_grants_no_authority():
     assert payload["scope"]["coverage"] == "PLANNER_CRITICAL_SUBSET"
     assert payload["scope"]["complete_family_capability_diff"] is False
     assert payload["scope"]["live_dataset_coverage"] == (
-        "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP"
+        "TRUNCATED_AT_MAX_NODES_PLUS_TARGETED_HELP_PLUS_R0_LIVE_OUTPUT"
     )
 
     authority = payload["authority"]
@@ -41,35 +33,26 @@ def test_planner_diff_is_scoped_and_grants_no_authority():
 
 def test_l3_documented_commands_are_help_observed_but_still_unallowlisted():
     entries = entries_by_command()
-
-    interface_entry = entries["show ip interface"]
-    route_entry = entries["show ip route"]
-    summary_entry = entries["show ip route summary"]
-
-    for command, entry in (
-        ("show ip interface", interface_entry),
-        ("show ip route", route_entry),
-        ("show ip route summary", summary_entry),
-    ):
+    for command in ("show ip interface", "show ip route", "show ip route summary"):
+        entry = entries[command]
         assert entry["documentation_state"] == "DOCUMENTED"
         assert entry["live_execution_state"] == "MISSING"
         assert command not in READ_ONLY_EXEC_ALLOWLIST
         assert "UNSUPPORTED" not in entry["live_help_state"]
 
-    assert interface_entry["live_help_state"] == (
-        "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR"
-    )
-    assert route_entry["live_help_state"] == (
-        "OBSERVED_NONTERMINAL_HELP_REQUIRES_SELECTOR"
-    )
-    assert summary_entry["live_help_state"] == (
-        "OBSERVED_FILTER_ONLY_HELP_NO_TERMINAL_CR"
-    )
+
+def test_vlan_is_live_validated_and_collector_approved():
+    entry = entries_by_command()["show vlan"]
+    assert entry["live_help_state"] == "OBSERVED_TERMINAL_CR"
+    assert entry["live_execution_state"] == "OBSERVED_AND_CURRENTLY_ALLOWLISTED"
+    assert entry["parser_state"] == "EXACT_LIVE_3_5_3_3_VALIDATED"
+    assert entry["planner_state"] == "READ_ONLY_COLLECTOR_APPROVED_PARTIAL_SCOPE"
+    assert "show vlan" in READ_ONLY_EXEC_ALLOWLIST
 
 
-def test_priority_vlan_and_port_commands_are_help_observed_but_not_executable():
+def test_pending_port_commands_remain_help_observed_but_not_collectors():
     entries = entries_by_command()
-    for command in ("show vlan", "show interfaces status", "show interfaces switchport"):
+    for command in ("show interfaces status", "show interfaces switchport"):
         entry = entries[command]
         assert entry["live_help_state"] == "OBSERVED_TERMINAL_CR"
         assert entry["live_execution_state"] == "MISSING"
@@ -78,18 +61,12 @@ def test_priority_vlan_and_port_commands_are_help_observed_but_not_executable():
         assert command not in READ_ONLY_EXEC_ALLOWLIST
 
 
-def test_existing_three_command_inventory_remains_the_only_approved_execution_subset_here():
+def test_current_approved_execution_subset_is_exactly_four_commands():
     entries = entries_by_command()
-    assert entries["show version"]["live_execution_state"] == (
-        "OBSERVED_AND_CURRENTLY_ALLOWLISTED"
-    )
-    assert entries["show ip ssh"]["live_execution_state"] == (
-        "OBSERVED_AND_CURRENTLY_ALLOWLISTED"
-    )
-    assert "show version" in READ_ONLY_EXEC_ALLOWLIST
-    assert "show ip ssh" in READ_ONLY_EXEC_ALLOWLIST
+    assert entries["show version"]["live_execution_state"] == "OBSERVED_AND_CURRENTLY_ALLOWLISTED"
+    assert entries["show ip ssh"]["live_execution_state"] == "OBSERVED_AND_CURRENTLY_ALLOWLISTED"
     assert READ_ONLY_EXEC_ALLOWLIST == frozenset(
-        {"show version", "show system", "show ip ssh"}
+        {"show version", "show system", "show ip ssh", "show vlan"}
     )
 
 
