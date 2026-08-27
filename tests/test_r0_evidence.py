@@ -21,9 +21,9 @@ def test_candidate_registry_loads_without_granting_execution():
 
 
 def test_ready_candidate_ingestion_is_digest_only_and_unverified():
-    raw = "show vlan\r\n1 default Gi1-24\r\nswitch#"
+    raw = "show interfaces status\r\nge1 1G-Copper Full 1000 Enabled Off Up Disabled Off\r\nswitch#"
     record = ingest_external_r0_output(
-        command="show vlan",
+        command="show interfaces status",
         product_id="CBS250-24T-4X",
         firmware_version="3.5.3.3",
         raw_output=raw,
@@ -31,7 +31,7 @@ def test_ready_candidate_ingestion_is_digest_only_and_unverified():
     )
 
     payload = record.as_dict()
-    assert record.command == "show vlan"
+    assert record.command == "show interfaces status"
     assert record.verification_status == INGESTED_STATUS
     assert record.raw_text_sha256.startswith("sha256:")
     assert record.canonical_text_sha256.startswith("sha256:")
@@ -43,7 +43,18 @@ def test_ready_candidate_ingestion_is_digest_only_and_unverified():
     assert record.raw_output_retained is False
     assert record.raw_output_commit_allowed is False
     assert raw not in json.dumps(payload)
-    assert "default" not in json.dumps(payload)
+    assert "1G-Copper" not in json.dumps(payload)
+
+
+def test_promoted_candidate_is_not_reingested_as_pending_validation():
+    with pytest.raises(R0EvidenceError, match="not ready for controlled live read validation"):
+        ingest_external_r0_output(
+            command="show vlan",
+            product_id="CBS250-24T-4X",
+            firmware_version="3.5.3.3",
+            raw_output="captured output",
+            source_label="already-promoted",
+        )
 
 
 def test_line_ending_digests_preserve_raw_provenance_and_canonical_comparison():
@@ -65,7 +76,7 @@ def test_line_ending_digests_preserve_raw_provenance_and_canonical_comparison():
 def test_exact_firmware_mismatch_is_blocked():
     with pytest.raises(R0EvidenceError, match="does not match the exact candidate review target"):
         ingest_external_r0_output(
-            command="show vlan",
+            command="show interfaces status",
             product_id="CBS250-24T-4X",
             firmware_version="3.3.0.16",
             raw_output="captured output",
@@ -109,7 +120,7 @@ def test_selector_required_bare_lacp_is_not_ingested():
 def test_empty_output_is_rejected():
     with pytest.raises(R0EvidenceError, match="raw_output must contain"):
         ingest_external_r0_output(
-            command="show vlan",
+            command="show interfaces status",
             product_id="CBS250-24T-4X",
             firmware_version="3.5.3.3",
             raw_output=" \r\n ",
@@ -119,7 +130,7 @@ def test_empty_output_is_rejected():
 
 def test_tampered_candidate_review_cannot_grant_write_or_execution_authority(tmp_path):
     review = {
-        "schema_version": 1,
+        "schema_version": 2,
         "target": {"product_id": "CBS250-24T-4X", "firmware": "3.5.3.3"},
         "authority": {
             "device_write_authority": True,
