@@ -1,8 +1,8 @@
-"""CBS250 read-only inventory collectors and parsers.
+"""CBS250 reviewed read-only inventory collectors and parsers.
 
 Collectors in this module can request only commands already approved by ``cbs250_safety``.
-They normalize evidence into product models but deliberately return ``OBSERVED_PARTIAL`` until
-VLAN/port/routing collectors are separately reviewed and added to the exact allowlist.
+The reviewed subset now includes exact-live validated VLAN inventory, but the combined state
+remains ``OBSERVED_PARTIAL`` until port/L3/management scope is separately reviewed.
 """
 from __future__ import annotations
 
@@ -13,7 +13,13 @@ from typing import Protocol
 
 from cbs250_safety import READ_ONLY_EXEC_ALLOWLIST
 
-from .current_state import CurrentManagementState, CurrentNetworkState, CurrentStateBasis
+from .current_state import (
+    CurrentManagementState,
+    CurrentNetworkState,
+    CurrentStateBasis,
+    CurrentVLANState,
+)
+from .documented_output_parsers import DocumentedParserError, parse_documented_show_vlan
 from .models import (
     CapabilityState,
     DeviceCapability,
@@ -23,11 +29,12 @@ from .models import (
 from .read_only_transport import ReadOnlyCommandResult, ReadOnlySessionError
 
 
-COLLECTOR_SCHEMA_VERSION = 1
+COLLECTOR_SCHEMA_VERSION = 2
 COLLECTOR_COMMANDS = (
     "show system",
     "show version",
     "show ip ssh",
+    "show vlan",
 )
 
 if not set(COLLECTOR_COMMANDS).issubset(READ_ONLY_EXEC_ALLOWLIST):
@@ -90,7 +97,10 @@ class CBS250InventorySnapshot:
             management = self.current_network_state.management
             current = {
                 "basis": self.current_network_state.basis.value,
-                "vlans": [],
+                "vlans": [
+                    {"vlan_id": vlan.vlan_id}
+                    for vlan in self.current_network_state.vlans
+                ],
                 "access_ports": [],
                 "trunks": [],
                 "management": None
@@ -134,6 +144,8 @@ class CBS250InventorySnapshot:
             "device_write_authority": False,
             "credentials_exported": False,
             "raw_command_output_exported": False,
+            "vlan_names_exported": False,
+            "port_membership_exported": False,
         }
 
 
@@ -243,6 +255,25 @@ def parse_show_ip_ssh(text: str) -> SSHInventory:
     )
 
 
+def _parse_vlan_inventory(
+    outputs: dict[str, str],
+    errors: list[CollectorError],
+) -> tuple[object, ...]:
+    if "show vlan" not in outputs:
+        return ()
+    try:
+        return tuple(parse_documented_show_vlan(outputs["show vlan"]))
+    except DocumentedParserError:
+        errors.append(
+            CollectorError(
+                command="show vlan",
+                code="collector_parse_error",
+                message="Read-only show vlan output did not satisfy the reviewed parser contract",
+            )
+        )
+        return ()
+
+
 def collect_cbs250_inventory(
     executor: ReadOnlyCommandExecutor,
     *,
@@ -251,9 +282,9 @@ def collect_cbs250_inventory(
 ) -> CBS250InventorySnapshot:
     """Collect the currently reviewed R0 inventory subset.
 
-    This function intentionally cannot claim planner-scope completeness because VLAN/port/L3
-    collectors are not yet allowlisted. It returns ``OBSERVED_PARTIAL`` whenever device
-    identity can be normalized.
+    VLAN identity is now exact-live validated and normalized. The function intentionally cannot
+    claim planner-scope completeness because port/L3/management collectors are not yet complete;
+    therefore observed state remains ``OBSERVED_PARTIAL`` and absence is not authoritative.
     """
     timestamp = collected_at_utc or datetime.now(timezone.utc).isoformat()
     outputs: dict[str, str] = {}
@@ -285,6 +316,7 @@ def collect_cbs250_inventory(
     system = parse_show_system(outputs.get("show system", ""))
     version = parse_show_version(outputs.get("show version", ""))
     ssh = parse_show_ip_ssh(outputs["show ip ssh"]) if "show ip ssh" in outputs else None
+    vlan_rows = _parse_vlan_inventory(outputs, errors)
 
     product_id = system.get("product_id")
     firmware_version = version.get("firmware_version")
@@ -313,16 +345,33 @@ def collect_cbs250_inventory(
                 )
             )
             management_services.append("ssh")
+        if vlan_rows:
+            capabilities.append(
+                DeviceCapability(
+                    feature_id="vlan_8021q",
+                    state=CapabilityState.DOCUMENTED_AND_OBSERVED,
+                    source="live:show vlan",
+                    risk_class="R0",
+                )
+            )
+
+        vlan_ids = tuple(row.vlan_id for row in vlan_rows)
+        current_vlans = tuple(
+            CurrentVLANState(vlan_id=row.vlan_id, name=row.name)
+            for row in vlan_rows
+        )
 
         observed_state = ObservedState(
             fingerprint=fingerprint,
             collected_at_utc=timestamp,
             source_revision=source_revision,
+            vlan_ids=vlan_ids,
             capabilities=tuple(capabilities),
             partial=True,
         )
         current_state = CurrentNetworkState(
             basis=CurrentStateBasis.OBSERVED_PARTIAL,
+            vlans=current_vlans,
             management=CurrentManagementState(
                 vlan_id=None,
                 services=tuple(management_services),
