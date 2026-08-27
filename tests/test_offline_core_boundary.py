@@ -37,6 +37,14 @@ FORBIDDEN_IMPORT_ROOTS = {
     "netmiko",
     "scrapli",
 }
+DANGEROUS_CLI_PREFIXES = (
+    "configure terminal",
+    "copy running-config startup-config",
+    "write memory",
+    "reload",
+    "clear logging",
+    "delete flash:",
+)
 
 
 def imported_roots(path: Path) -> set[str]:
@@ -49,6 +57,35 @@ def imported_roots(path: Path) -> set[str]:
         elif isinstance(node, ast.ImportFrom) and node.module:
             roots.add(node.module.split(".", 1)[0])
     return roots
+
+
+def dangerous_cli_lines(text: str) -> set[str]:
+    """Return string-literal lines that look like executable write CLI.
+
+    Matching is line/prefix based instead of raw substring based so safety metadata such
+    as ``reboot_or_reload_performed`` cannot be mistaken for the standalone ``reload``
+    command. Multiline command bundles are still detected one line at a time.
+    """
+    found: set[str] = set()
+    for raw_line in text.splitlines() or [text]:
+        line = " ".join(raw_line.strip().lower().split())
+        if not line:
+            continue
+        for prefix in DANGEROUS_CLI_PREFIXES:
+            if line == prefix or line.startswith(prefix + " ") or (
+                prefix.endswith(":") and line.startswith(prefix)
+            ):
+                found.add(prefix)
+    return found
+
+
+def embedded_dangerous_cli_literals(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            found.update(dangerous_cli_lines(node.value))
+    return found
 
 
 def test_normalized_offline_core_has_no_device_execution_imports():
@@ -83,15 +120,15 @@ def test_offline_core_has_no_raw_cli_execution_api_names():
     assert not violations, f"Offline core exposed CLI/device execution APIs: {violations}"
 
 
+def test_cli_literal_scanner_ignores_metadata_but_detects_real_command_lines():
+    assert dangerous_cli_lines("reboot_or_reload_performed") == set()
+    assert dangerous_cli_lines("no reboot/reload was performed") == set()
+    assert dangerous_cli_lines("reload") == {"reload"}
+    assert dangerous_cli_lines("  configure   terminal  ") == {"configure terminal"}
+    assert dangerous_cli_lines("safe note\ndelete flash:config.txt") == {"delete flash:"}
+
+
 def test_offline_design_policy_planner_analysis_dry_run_and_export_do_not_embed_cisco_write_cli():
-    dangerous_fragments = {
-        "configure terminal",
-        "copy running-config startup-config",
-        "write memory",
-        "reload",
-        "clear logging",
-        "delete flash:",
-    }
     violations = {}
     for relative in (
         "cisco_assistant/profile_registry.py",
@@ -113,8 +150,7 @@ def test_offline_design_policy_planner_analysis_dry_run_and_export_do_not_embed_
         "cisco_assistant/dry_run.py",
         "cisco_assistant/export_bundle.py",
     ):
-        text = (ROOT / relative).read_text(encoding="utf-8").lower()
-        found = sorted(fragment for fragment in dangerous_fragments if fragment in text)
+        found = sorted(embedded_dangerous_cli_literals(ROOT / relative))
         if found:
             violations[relative] = found
     assert not violations, f"Offline design/policy/planner/analysis/dry-run/export layer embedded device write CLI: {violations}"
