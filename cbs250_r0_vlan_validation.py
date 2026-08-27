@@ -1,48 +1,42 @@
 #!/usr/bin/env python3
-"""One-shot exact-target R0 live-output validation for ``show vlan``.
+"""Retired one-shot R0 evidence helper for the promoted ``show vlan`` command.
 
-This tool is intentionally NOT a collector. It validates exactly one candidate command,
-``show vlan``, under a separate validation-only allowlist. It executes no configuration,
-no reboot/reload, no port operation, and no other candidate command.
+The exact live validation completed successfully for CBS250-24T-4X / 3.5.3.3 and its
+sanitized evidence is committed under ``knowledge/cbs250/live``. The command is now owned
+by the reviewed read-only collector authority, so this former validation lane contains no
+SSH/device execution path and cannot run ``show vlan`` again.
 
-Raw device output remains local and is never written to the sanitized result. If the
-output paginates, the tool sends no pager key and fails closed. The exported digest is
-explicitly over cleaned/normalized terminal text, not raw transport bytes.
+``build_sanitized_result`` is retained only to regression-test the historical schema-v2
+evidence contract. It does not grant collector or validation authority.
 """
 from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
-import getpass
 import hashlib
 import json
-import os
-from pathlib import Path
-from types import SimpleNamespace
-from typing import Optional
 
-import paramiko
-
-from cbs250_cli_discovery import CBS250ReadOnlyCrawler, DiscoveryError, clean_terminal_text
-from cbs250_discovery_utils import has_more_prompt
 from cbs250_safety import (
     READ_ONLY_EXEC_ALLOWLIST,
+    READ_ONLY_PROMOTION_EVIDENCE,
     R0_VALIDATION_EXEC_ALLOWLIST,
-    assert_r0_validation_executable,
 )
 from cisco_assistant.documented_output_parsers import (
     DocumentedParserError,
     parse_documented_show_vlan,
 )
-from cisco_assistant.read_only_collectors import parse_show_system, parse_show_version
 
 
-TOOL_VERSION = "1.1.0"
+TOOL_VERSION = "1.2.0"
 SCHEMA_VERSION = 2
 EXPECTED_PRODUCT_ID = "CBS250-24T-4X"
 EXPECTED_FIRMWARE = "3.5.3.3"
 VALIDATION_COMMAND = "show vlan"
 OUTPUT_DIGEST_SCOPE = "CLEAN_TERMINAL_TEXT_UTF8"
+PROMOTION_EVIDENCE_PATH = (
+    "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json"
+)
+PROMOTION_STATE = "PROMOTED_TO_COLLECTOR"
 
 
 class VLANValidationError(RuntimeError):
@@ -53,68 +47,23 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def validate_static_policy() -> None:
-    command = assert_r0_validation_executable(VALIDATION_COMMAND)
-    if command != "show vlan":
-        raise VLANValidationError("Unexpected normalized VLAN validation command")
-    if R0_VALIDATION_EXEC_ALLOWLIST != frozenset({"show vlan"}):
-        raise VLANValidationError("R0 validation allowlist contains unexpected commands")
-    if VALIDATION_COMMAND in READ_ONLY_EXEC_ALLOWLIST:
-        raise VLANValidationError("show vlan must not be collector-allowlisted before promotion")
-
-
-def build_crawler_args(args: argparse.Namespace) -> SimpleNamespace:
-    return SimpleNamespace(
-        host=args.host,
-        username=args.username,
-        port=args.port,
-        timeout=args.timeout,
-        quiet_time=args.quiet_time,
-        help_wait=4.0,
-        transport_recycle=0,
-        reconnect_backoff=1.0,
-        channel_open_attempts=3,
-        progress_every=0,
-        checkpoint_every=0,
-        delay=0.0,
-        include_config_help=False,
-    )
-
-
-def verify_exact_target(crawler: CBS250ReadOnlyCrawler) -> dict[str, str]:
-    system = parse_show_system(crawler.execute_read_only("show system"))
-    version = parse_show_version(crawler.execute_read_only("show version"))
-    product_id = system.get("product_id")
-    firmware = version.get("firmware_version")
-    if product_id != EXPECTED_PRODUCT_ID or firmware != EXPECTED_FIRMWARE:
+def validate_static_policy() -> str:
+    """Verify that validation-only authority was cleanly transferred to the collector."""
+    if VALIDATION_COMMAND not in READ_ONLY_EXEC_ALLOWLIST:
+        raise VLANValidationError("show vlan is not present in the reviewed collector allowlist")
+    if VALIDATION_COMMAND in R0_VALIDATION_EXEC_ALLOWLIST:
         raise VLANValidationError(
-            f"Exact target mismatch: observed={product_id!r}/{firmware!r}, "
-            f"required={EXPECTED_PRODUCT_ID}/{EXPECTED_FIRMWARE}"
+            "show vlan must not retain validation-only authority after collector promotion"
         )
-    return {"product_id": str(product_id), "firmware_version": str(firmware)}
-
-
-def execute_exact_validation_command(crawler: CBS250ReadOnlyCrawler) -> str:
-    command = assert_r0_validation_executable(VALIDATION_COMMAND)
-    ch: Optional[paramiko.Channel] = None
-    try:
-        ch, _prompt, _initial = crawler._fresh_exec_shell()
-        ch.send(command + "\r")
-        raw = crawler._read_quiet(ch, crawler.a.timeout)
-        text = clean_terminal_text(raw)
-        if has_more_prompt(text):
-            raise VLANValidationError(
-                "show vlan output paginated; no pager key was sent and validation is incomplete"
-            )
-        if any(marker in text for marker in ("% Unrecognized command", "% Invalid input", "Command too long")):
-            raise DiscoveryError("Exact show vlan validation command was rejected")
-        return text
-    finally:
-        if ch is not None:
-            ch.close()
+    if R0_VALIDATION_EXEC_ALLOWLIST:
+        raise VLANValidationError("Unexpected R0 validation-only commands remain registered")
+    if READ_ONLY_PROMOTION_EVIDENCE.get(VALIDATION_COMMAND) != PROMOTION_EVIDENCE_PATH:
+        raise VLANValidationError("show vlan collector promotion evidence binding is missing")
+    return PROMOTION_STATE
 
 
 def build_sanitized_result(target: dict[str, str], text: str) -> dict[str, object]:
+    """Build the historical schema-v2 sanitized validation record for regression tests."""
     try:
         rows = parse_documented_show_vlan(text)
     except DocumentedParserError as exc:
@@ -125,7 +74,7 @@ def build_sanitized_result(target: dict[str, str], text: str) -> dict[str, objec
     return {
         "schema_version": SCHEMA_VERSION,
         "record_type": "R0_LIVE_OUTPUT_VALIDATION",
-        "tool_version": TOOL_VERSION,
+        "tool_version": "1.1.0",
         "generated_at_utc": utc_now(),
         "status": "PASS_LIVE_PARSER_VALIDATED",
         "target": target,
@@ -156,30 +105,25 @@ def build_sanitized_result(target: dict[str, str], text: str) -> dict[str, objec
             "pager_navigation_sent": False,
         },
         "note": (
-            "One-shot exact-live parser validation only. Passing does not promote show vlan "
-            "into the collector allowlist and does not grant write authority."
+            "Historical one-shot exact-live parser validation record. Passing did not itself "
+            "grant collector authority; promotion was performed separately after review."
         ),
     }
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="CBS250 exact-target show vlan R0 validation")
-    parser.add_argument("--host")
-    parser.add_argument("--username", default="admin")
-    parser.add_argument("--port", type=int, default=22)
-    parser.add_argument("--password-env", default="CBS_PASSWORD")
-    parser.add_argument("--timeout", type=float, default=12.0)
-    parser.add_argument("--quiet-time", type=float, default=0.6)
-    parser.add_argument("--output", default="")
+    parser = argparse.ArgumentParser(
+        description="Retired CBS250 show vlan R0 validation lane; policy-check only"
+    )
     parser.add_argument("--policy-check", action="store_true")
     return parser.parse_args()
 
 
 def policy_check() -> int:
-    validate_static_policy()
-    print("[PASS] show vlan validation-only policy")
-    print("[PASS] collector allowlist remains unchanged")
-    print(f"[PASS] sanitized evidence schema v{SCHEMA_VERSION} uses {OUTPUT_DIGEST_SCOPE}")
+    state = validate_static_policy()
+    print(f"[PASS] show vlan authority state: {state}")
+    print("[PASS] validation-only authority is empty and disjoint from collector authority")
+    print(f"[PASS] promotion evidence: {PROMOTION_EVIDENCE_PATH}")
     return 0
 
 
@@ -187,35 +131,11 @@ def main() -> int:
     args = parse_args()
     if args.policy_check:
         return policy_check()
-    if not args.host:
-        print("[BLOCKED] --host is required unless --policy-check is used")
-        return 2
-
-    validate_static_policy()
-    password = os.getenv(args.password_env)
-    if password is None:
-        password = getpass.getpass(f"SSH password for {args.username}@{args.host}: ")
-
-    crawler = CBS250ReadOnlyCrawler(build_crawler_args(args), password, Path.cwd())
-    try:
-        crawler.connect(reason="r0-show-vlan-validation")
-        target = verify_exact_target(crawler)
-        text = execute_exact_validation_command(crawler)
-        result = build_sanitized_result(target, text)
-        rendered = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
-        if args.output:
-            output = Path(args.output).expanduser().resolve()
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(rendered, encoding="utf-8")
-            print(f"[PASS] Sanitized validation evidence: {output}")
-        else:
-            print(rendered, end="")
-        return 0
-    except Exception as exc:
-        print(f"[BLOCKED] {type(exc).__name__}: {exc}")
-        return 2
-    finally:
-        crawler.close()
+    print(
+        "[BLOCKED] show vlan validation-only execution is retired after collector promotion; "
+        "use the reviewed read-only collector path instead"
+    )
+    return 2
 
 
 if __name__ == "__main__":
