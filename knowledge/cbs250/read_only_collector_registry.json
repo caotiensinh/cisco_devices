@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "registry_id": "cbs250-read-only-collectors-v1",
+  "schema_version": 2,
+  "registry_id": "cbs250-read-only-collectors-v2",
   "authority": {
     "device_write_authority": false,
     "execution_class": "R0_ONLY",
@@ -49,9 +49,34 @@
         "CurrentManagementState.services"
       ],
       "planner_scope_complete": false
+    },
+    {
+      "command": "show vlan",
+      "collector_id": "vlan_inventory_state",
+      "risk_class": "R0",
+      "automation_status": "approved",
+      "live_evidence": "knowledge/cbs250/live/CBS250-24T-4X_3.5.3.3_20260827_show_vlan_r0_validation.json",
+      "execution_precondition": {
+        "product_id": "CBS250-24T-4X",
+        "firmware_version": "3.5.3.3",
+        "identity_must_be_proven_before_execution": true,
+        "mismatch_behavior": "BLOCK_BEFORE_COMMAND_EXECUTION"
+      },
+      "normalizes": [
+        "ObservedState.vlan_ids",
+        "ObservedState.capabilities.vlan_8021q",
+        "CurrentNetworkState.vlans"
+      ],
+      "safe_export": {
+        "vlan_ids": true,
+        "vlan_names": false,
+        "port_membership": false,
+        "raw_output": false
+      },
+      "planner_scope_complete": false
     }
   ],
   "candidate_review": "knowledge/cbs250/r0_candidate_review_3.5.3.3.json",
-  "blocked_expansion_rule": "No additional command may be automated until exact syntax, R0 semantics, exact-target live execution output, parser coverage, safety tests, registry approval, and cbs250_safety allowlist approval all exist.",
+  "blocked_expansion_rule": "No additional command may be automated until exact syntax, R0 semantics, exact-target live execution output, parser coverage, safety tests, registry approval, and cbs250_safety allowlist approval all exist. Exact-target promotions must be blocked before transport execution when product or firmware does not match their evidence binding.",
   "current_planner_scope_complete": false
 }
