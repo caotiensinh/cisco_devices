@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "record_type": "R0_LIVE_OUTPUT_VALIDATION",
+  "evidence_scope": "SANITIZED_COMMITTED_COPY",
+  "source": {
+    "workflow_run_id": 33030461151,
+    "workflow_job_id": 98381565457,
+    "workflow_head_sha": "3a660eff77fc372d602156b29598850ce05c03b0",
+    "validated_main_base_sha": "92482767d55167afc2ca8edd3f0a1749619ef4c0",
+    "artifact_id": 9630040434,
+    "artifact_name": "cbs250-r0-show-vlan-schema-v2-sanitized",
+    "artifact_digest": "sha256:a2cbd2c78f102877a15d44aac6dd4f67448bbcfa4b34de34e7a6e4a0bca0912f"
+  },
+  "tool_version": "1.1.0",
+  "generated_at_utc": "2026-08-27T01:34:31.831989+00:00",
+  "status": "PASS_LIVE_PARSER_VALIDATED",
+  "target": {
+    "product_id": "CBS250-24T-4X",
+    "firmware_version": "3.5.3.3"
+  },
+  "command": "show vlan",
+  "risk_class": "R0",
+  "normalized_output_sha256": "sha256:b4ecfefcc7ea6002009febc460ee2cd769f73304cd8143d728c91db77842f741",
+  "output_digest_scope": "CLEAN_TERMINAL_TEXT_UTF8",
+  "raw_output_retained": false,
+  "parser": "parse_documented_show_vlan",
+  "parser_result": "PASS",
+  "parsed_row_count": 1,
+  "observed_vlan_ids": [
+    1
+  ],
+  "port_membership_exported": false,
+  "vlan_names_exported": false,
+  "authority": {
+    "device_write_authority": false,
+    "production_network_write_authority": false,
+    "collector_execution_authority": false,
+    "validation_only_execution_authority": true
+  },
+  "safety": {
+    "configuration_mode_entered": false,
+    "configuration_changed": false,
+    "startup_config_changed": false,
+    "reboot_or_reload_performed": false,
+    "firmware_or_boot_state_changed": false,
+    "specific_interface_command_executed": false,
+    "pager_navigation_sent": false
+  },
+  "promotion_state": "ELIGIBLE_FOR_SEPARATE_REVIEW_NOT_PROMOTED",
+  "note": "Sanitized exact-live evidence only. No host, username, VLAN name, port membership, raw terminal output, or credential material is retained. This record does not itself grant collector authority."
+}
