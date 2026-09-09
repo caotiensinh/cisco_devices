@@ -1,0 +1,49 @@
+name: CameraOps Linux Relay Diagnostic One Shot
+
+on:
+  push:
+    branches:
+      - diag/cameraops-linux-relay-20260909
+    paths:
+      - '.github/workflows/cameraops-linux-relay-diag-once.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cameraops-linux-relay-diag-once
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 8
+    steps:
+      - name: Inspect runner identity and existing SSH path read-only
+        shell: cmd
+        run: |
+          @echo off
+          set TARGET=192.168.11.112
+          echo === RUNNER IDENTITY ===
+          whoami
+          echo USERPROFILE=%USERPROFILE%
+          echo RUNNER_TEMP=%RUNNER_TEMP%
+          echo === USER SSH METADATA ===
+          if not exist "%USERPROFILE%\.ssh" echo USER_SSH_DIR=ABSENT
+          if exist "%USERPROFILE%\.ssh" dir /a "%USERPROFILE%\.ssh"
+          if exist "C:\Users\cdn14\.ssh" (
+            echo CDN14_SSH_DIR=VISIBLE
+            dir /a "C:\Users\cdn14\.ssh"
+          ) else (
+            echo CDN14_SSH_DIR=ABSENT_OR_NOT_VISIBLE
+          )
+          echo === PUTTY CACHE ===
+          reg query "HKCU\Software\SimonTatham\PuTTY\SshHostKeys" 2>nul || echo PUTTY_HOSTKEY_CACHE=ABSENT
+          echo === STRICT OPENSSH BATCH PROBE ===
+          ssh.exe -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes aiserver@%TARGET% "printf CISCO_RELAY_OPENSSH_OK" 2>&1
+          echo OPENSSH_BATCH_EXIT=%ERRORLEVEL%
+          echo === STRICT PLINK BATCH PROBE ===
+          "C:\Program Files\PuTTY\plink.exe" -batch -ssh -l aiserver %TARGET% "printf CISCO_RELAY_PLINK_OK" 2>&1
+          echo PLINK_BATCH_EXIT=%ERRORLEVEL%
+          echo RELAY_DIAGNOSTIC_MUTATION=false
+          exit /b 0
